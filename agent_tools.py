@@ -61,11 +61,18 @@ def create_tools(vm: VirtualMachine):
     current_line_number: Optional[int] = None
     scroll_line_count = 80
     
+    def vm_run_tool(tool_name: str, args: list[str] = [])->str:
+        args = [f'\"{arg}\"' for arg in args]
+        args_str = ' '.join(args)
+        return vm.run_command(f"python /tool.py {tool_name} {args_str}")
+    
     def get_file_content(file_path: str)->str:
-        content = vm.run_tool('view_file', [file_path])
+        content = vm_run_tool('view_file', [file_path])
         if len(content) >= 1 and content[-1] == '\n':
             content = content[:-1]
         return content
+    
+    
     
     @tool
     def open_file(file_name: str, goto_line: int = 1)->str:
@@ -142,7 +149,7 @@ def create_tools(vm: VirtualMachine):
         Returns:
             str: The result of the search.
         """
-        return vm.run_tool('search_file', [search_term, file_name])
+        return vm_run_tool('search_file', [search_term, file_name])
 
     @tool
     def search_dir(search_term: str, dir: str)->str:
@@ -155,7 +162,7 @@ def create_tools(vm: VirtualMachine):
         Returns:
             str: The result of the search.
         """
-        return vm.run_tool('search_dir', [search_term, dir])
+        return vm_run_tool('search_dir', [search_term, dir])
 
     @tool
     def find_file(file_name: str, dir: str)->str:
@@ -168,7 +175,7 @@ def create_tools(vm: VirtualMachine):
         Returns:
             str: The result of the find.
         """
-        return vm.run_tool('find_file', [file_name, dir])
+        return vm_run_tool('find_file', [file_name, dir])
     
     @tool
     def run_linux_command(command: str)->str:
@@ -181,7 +188,7 @@ def create_tools(vm: VirtualMachine):
         Returns:
             str: The output of the command.
         """
-        return vm.run_command(command)
+        return vm_run_tool(command)
 
     @tool
     def edit_file(begin_line: int, end_line: int, new_content: str)->str:
@@ -199,7 +206,7 @@ def create_tools(vm: VirtualMachine):
         global current_open_file, current_line_number
         if current_open_file is None:
             return "No file is open. You must edit a file after opening it."
-        edit_result = vm.run_tool('edit_file', [current_open_file, str(begin_line), str(end_line), new_content])
+        edit_result = vm_run_tool('edit_file', [current_open_file, str(begin_line), str(end_line), new_content])
         file_content = get_file_content(current_open_file)
         current_line_number = begin_line
         return edit_result + "\n" + view_file_content(current_open_file, file_content, current_line_number, current_line_number + display_line_count)
@@ -215,7 +222,7 @@ def create_tools(vm: VirtualMachine):
             str: The output of the tool.
         """
         global current_open_file, current_line_number
-        result = vm.run_tool('create_file', [file_name])
+        result = vm_run_tool('create_file', [file_name])
         current_open_file = file_name
         current_line_number = 1
         file_content = get_file_content(file_name)
@@ -228,7 +235,7 @@ def create_tools(vm: VirtualMachine):
         Returns:
             str: The result of the submission.
         """
-        patch_content = vm.run_tool('get_patch_file', [vm.repo_dir])[:-1]
+        patch_content = vm_run_tool('get_patch_file', [vm.repo_dir])[:-1]
         return patch_content
     
     return {k: v for k, v in locals().items() if isinstance(v, BaseTool)}
