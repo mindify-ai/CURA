@@ -1,0 +1,10 @@
+docker
+datasets
+langchain
+langchain-core
+langchain-community
+langgraph
+langsmith
+langchain-openai
+python-dotenv
+gitpython
