@@ -1,0 +1,12 @@
+[MASTER]
+ignore=CVS
+jobs=1
+
+[MESSAGES CONTROL]
+disable=trailing-whitespace,missing-docstring,trailing-newlines
+
+[REPORTS]
+output-format=text
+
+[BASIC]
+good-names=i,j,k,ex,Run,_

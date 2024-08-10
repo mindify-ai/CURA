@@ -7,6 +7,8 @@ RUN apt-get update && \
 WORKDIR /
 
 RUN  pip install --upgrade pip && \
-    pip install gitpython
+    pip install gitpython flask
+
+EXPOSE 5001
 
 CMD ["/bin/bash"]

@@ -1,241 +1,170 @@
 from langchain_core.tools import tool, BaseTool
 from typing import Optional
-from vm import VirtualMachine
+from vm import RepoVM
+from file_editor import FileEditor_with_linting
 
-display_line_count = 100
+def create_tools(vm: RepoVM):
+    
+    file_editor: Optional[FileEditor_with_linting] = None
+    
+    @tool
+    def find_file(file_name: str, dir: str = vm.repo_path)->str:
+        """Finds all files with the given name in dir. If dir is not provided, searches in the root directory of the repo.
 
-def view_file_content(file_name: str, content: str, begin_line: int, end_line: int) -> str:
-    """
-    View the content of a file from the specified beginning line to the ending line.
+        Args:
+            file_name (str): Name of the file to search for.
+            dir (str, optional): Directory to search in. Defaults to the root directory of the repo.
 
-    Args:
-        content (str): The content of the file.
-        begin_line (int): The starting line number.
-        end_line (int): The ending line number.
+        Returns:
+            str: The result of the search.
+        """
+        return vm.interface.find_file(file_name, dir)
+    
+    @tool
+    def search_dir(search_term: str, dir: str = vm.repo_path)->str:
+        """Searches for a specific term in all files within a directory. If dir is not provided, searches in the root directory of the repo.
 
-    Returns:
-        str: A string containing the content of the specified lines in the desired format.
-    """
-    if begin_line > end_line:
-        return "Begin line number should be less than or equal to the end line number."
-    if begin_line < 1:
-        return "Begin line number should be greater than or equal to 1."
-    if end_line < 1:
-        return "End line number should be greater than or equal to 1."
-    
-    
-    lines = content.split('\n')
-    
-    total_lines = len(lines)
-    if begin_line > total_lines:
-        return "Begin line number should be less than or equal to the total number of lines in the file."
-    
-    output = "File Viewer - " + file_name + "\n"
-    if not content:
-        output += "The file is empty."
-        return output
-    
-    if begin_line < 1:
-        begin_line = 1
-    if end_line > total_lines:
-        end_line = total_lines
-    
-    if begin_line > 1:
-        output += f"({begin_line - 1} more lines above)\n\n"
-    else:
-        output += "Beginning of file\n\n"
-    
-    for line_no in range(begin_line, end_line + 1):
-        output += f"{line_no}:{lines[line_no - 1]}\n"
-    
-    if end_line < total_lines:
-        output += f"\n({total_lines - end_line} more lines below)\n"
-    else:
-        output += "\n(End of file)"
-    
-    return output
+        Args:
+            search_term (str): Term to search for within the files.
+            dir (str, optional): Directory to search in. Defaults to the root directory of the repo.
 
-def create_tools(vm: VirtualMachine):
+        Returns:
+            str: The result of the search.
+        """
+        return vm.interface.search_dir(search_term, dir)
     
-    current_open_file: Optional[str] = None
-    current_line_number: Optional[int] = None
-    scroll_line_count = 80
-    
-    def vm_run_tool(tool_name: str, args: list[str] = [])->str:
-        args = [f'\"{arg}\"' for arg in args]
-        args_str = ' '.join(args)
-        return vm.run_command(f"python /tool.py {tool_name} {args_str}")
-    
-    def get_file_content(file_path: str)->str:
-        content = vm_run_tool('view_file', [file_path])
-        if len(content) >= 1 and content[-1] == '\n':
-            content = content[:-1]
-        return content
+    @tool
+    def search_file(search_term: str, file_path: str)->str:
+        """Searches for a specific term in a file and lists lines with matches.
+
+        Args:
+            search_term (str): Term to search for within the file.
+            file_name (str): Name of the file to search within.
+
+        Returns:
+            str: The result of the search.
+        """
+        return vm.interface.search_file(search_term, file_path)
     
     
     
     @tool
-    def open_file(file_name: str, goto_line: int = 1)->str:
-        """Opens the file at the given file_path.
+    def open_file(file_path: str, line_number: int = 1)->str:
+        """Opens the file at the given path in the editor. If line_number is provided, the window will move to include that line. You create a new empty file by providing a path that does not exist.
 
         Args:
-            file_path (str): The path of the file to open.
-            goto_line (int, optional): The line number to go to after opening the file. Defaults to 1.
+            file_path (str): Path to the file to open.
+            line_number (int, optional): Line number to move to. Defaults to 1.
 
         Returns:
             str: The content of the file.
         """
-        global current_open_file, current_line_number
-        current_open_file = file_name
-        current_line_number = goto_line
-        content = get_file_content(current_open_file)
-        return view_file_content(current_open_file, content, current_line_number, current_line_number + display_line_count)
-
-    @tool
-    def goto_line(line_number: int)->str:
-        """Goes to the specified line number in the currently opened file.
-
-        Args:
-            line_number (int): The line number to go to.
-
-        Returns:
-            str: The content of the file after going to the specified line.
-        """
-        global current_open_file, current_line_number
-        if current_open_file is None:
-            return "No file is open. You must open a file before going to a line."
-        current_line_number = line_number
-        content = get_file_content(current_open_file)
-        return view_file_content(current_open_file, content, current_line_number, current_line_number + display_line_count)
-
-    @tool
-    def scroll_down()->str:
-        """Scrolls down the currently opened file by the specified number of lines.
-
-        Returns:
-            str: The content of the file after scrolling.
-        """
-        global current_open_file, current_line_number
-        if current_open_file is None:
-            return "No file is open. You must open a file before scrolling."
-        current_line_number += scroll_line_count
-        content = get_file_content(current_open_file)
-        return view_file_content(current_open_file, content, current_line_number, current_line_number + display_line_count)
-
-    @tool
-    def scroll_up()->str:
-        """Scrolls up the currently opened file by the specified number of lines.
-
-        Returns:
-            str: The content of the file after scrolling.
-        """
-        global current_open_file, current_line_number
-        if current_open_file is None:
-            return "No file is open. You must open a file before scrolling."
-        current_line_number -= scroll_line_count
-        if current_line_number < 1:
-            current_line_number = 1
-        content = get_file_content(current_open_file)
-        return view_file_content(current_open_file, content, current_line_number, current_line_number + display_line_count)
-
-    @tool
-    def search_file(search_term: str, file_name: str)->str:
-        """Searches for search_term in provided file_name.
-
-        Args:
-            search_term (str): The term to search for.
-            file_name (str): The name of the file to search
-
-        Returns:
-            str: The result of the search.
-        """
-        return vm_run_tool('search_file', [search_term, file_name])
-
-    @tool
-    def search_dir(search_term: str, dir: str)->str:
-        """Searches for search_term in provided dir.
-
-        Args:
-            search_term (str): The term to search for.
-            dir (str): The directory to search in.
-
-        Returns:
-            str: The result of the search.
-        """
-        return vm_run_tool('search_dir', [search_term, dir])
-
-    @tool
-    def find_file(file_name: str, dir: str)->str:
-        """Finds the file with the given name in the provided directory.
-
-        Args:
-            file_name (str): The name of the file to find.
-            dir (str): The directory to search in.
-
-        Returns:
-            str: The result of the find.
-        """
-        return vm_run_tool('find_file', [file_name, dir])
+        global file_editor
+        content = vm.interface.get_file_content(file_path)
+        file_editor = FileEditor_with_linting(file_path, lambda content: vm.interface.write_file(file_path, content), content)
+        file_editor.goto_line(line_number)
+        return file_editor.display()
     
     @tool
-    def run_linux_command(command: str)->str:
-        """Runs the provided linux command. You can use this tool to run any linux command like python or ls.
-        You are always in the root directory. command cd is not supported.
+    def goto_line(line_number: int)->str:
+        """Moves the window to the given line in the editor. You must open a file first.
 
         Args:
-            command (str): The command to run.
+            line_number (int): Line number to move to.
 
         Returns:
-            str: The output of the command.
+            str: The content of the editor after moving to the line.
         """
-        return vm_run_tool(command)
-
+        global file_editor
+        if file_editor is None:
+            return "No file is currently open, please open a file first."
+        file_editor.goto_line(line_number)
+        return file_editor.display()
+    
     @tool
-    def edit_file(begin_line: int, end_line: int, new_content: str)->str:
-        """Edits the open file from the begin_line to the end_line with the new_content. You must open a file before editing it.
+    def scroll_down()->str:
+        """Scrolls down in the file editor. You must open a file first.
+
+        Returns:
+            str: The new content of the editor after scrolling down.
+        """
+        global file_editor
+        if file_editor is None:
+            return "No file is currently open, please open a file first."
+        file_editor.scroll_down()
+        return file_editor.display()
+    
+    @tool
+    def scroll_up()->str:
+        """Scrolls up in the file editor. You must open a file first.
+
+        Returns:
+            str: The new content of the editor after scrolling up.
+        """
+        global file_editor
+        if file_editor is None:
+            return "No file is currently open, please open a file first."
+        file_editor.scroll_up()
+        return file_editor.display()
+    
+    @tool
+    def edit(begin_line: int, end_line: int, new_content: str)->str:
+        """Replaces lines n through m (inclusive) with the given text in the open file. All of the new_content will be entered, so make sure your indentation is formatted properly. Python files will be checked for syntax errors after the edit. If an error is found, the edit will not be executed. Reading the error message and modifying your command is recommended as issuing the same command will return the same error.
 
         Args:
-            begin_line (int): The line number to start editing from.
+            begin_line (int): The line number to begin editing.
             end_line (int): The line number to end editing.
             new_content (str): The new content to replace the lines with.
 
         Returns:
-            str: The output of the tool.
+            str: The new content of the editor after editing.
         """
-        
-        global current_open_file, current_line_number
-        if current_open_file is None:
-            return "No file is open. You must edit a file after opening it."
-        edit_result = vm_run_tool('edit_file', [current_open_file, str(begin_line), str(end_line), new_content])
-        file_content = get_file_content(current_open_file)
-        current_line_number = begin_line
-        return edit_result + "\n" + view_file_content(current_open_file, file_content, current_line_number, current_line_number + display_line_count)
-
-    @tool
-    def create_file(file_name: str)->str:
-        """This tool creates a new empty file with the given absolute path.
-
-        Args:
-            file_name (str): The absolute path of the file to be created.
-
-        Returns:
-            str: The output of the tool.
-        """
-        global current_open_file, current_line_number
-        result = vm_run_tool('create_file', [file_name])
-        current_open_file = file_name
-        current_line_number = 1
-        file_content = get_file_content(file_name)
-        return result + "\n" + view_file_content(current_open_file, file_content, current_line_number, current_line_number + display_line_count)
-
+        global file_editor
+        if file_editor is None:
+            return "No file is currently open, please open a file first."
+        if file_editor.edit(begin_line, end_line, new_content):
+            if file_editor.file_path.endswith('.py'):
+                lint_errors_by_line = file_editor.lint()
+                lint_error = [
+                    error
+                    for line in range(begin_line, end_line + 1)
+                    if line in lint_errors_by_line
+                    for error in lint_errors_by_line[line]
+                ]
+                if not lint_error:
+                    return "Edit successful.\n" + file_editor.display()
+                else:
+                    file_editor.goto_line(begin_line)
+                    after_edit = file_editor.display()
+                    file_editor.undo()
+                    file_editor.goto_line(begin_line)
+                    before_edit = file_editor.display()
+                    error_messages = "\n".join(lint_error)
+                    return f"""Your proposed edit has introduced new syntax error(s). Please understand the fixes and retry your edit. Errors:
+{error_messages}
+This is how your edit would have looked if applied:
+{after_edit}
+This is how the file looked before your edit:
+{before_edit}
+Your changes have NOT been applied. Please fix your edit command and try again.
+DO NOT re-run the same failed edit tool. Running it again will lead to the same error."""
+            else:
+                return "Edit successful. Here is the new content:\n" + file_editor.display()
+        else:
+            return "Invalid line numbers."
+    
     @tool
     def submit()->str:
-        """Submit the patch from all previous edits and end the session.
+        """Submit all the repo changes and close the session. You must use this tool after all the changes are made.
 
         Returns:
             str: The result of the submission.
         """
-        patch_content = vm_run_tool('get_patch_file', [vm.repo_dir])[:-1]
-        return patch_content
+        patch_content = vm.interface.get_patch_file(vm.repo_path)
+        if not patch_content:
+            return "No changes to submit."
+        else:
+            return patch_content
+
     
     return {k: v for k, v in locals().items() if isinstance(v, BaseTool)}
