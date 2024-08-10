@@ -61,7 +61,13 @@ def create_tools(vm: RepoVM):
         """
         global file_editor
         content = vm.interface.get_file_content(file_path)
-        file_editor = FileEditor_with_linting(file_path, lambda content: vm.interface.write_file(file_path, content), content)
+        file_editor = FileEditor_with_linting(
+            file_path=file_path, 
+            write_file_fn=lambda content: vm.interface.write_file(file_path, content), 
+            file_content=content,
+            display_lines=100,
+            scroll_line=100
+        )
         file_editor.goto_line(line_number)
         return file_editor.display()
     
