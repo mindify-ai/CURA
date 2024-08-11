@@ -18,7 +18,10 @@ def create_tools(vm: RepoVM):
         Returns:
             str: The result of the search.
         """
-        return vm.interface.find_file(file_name, dir)
+        result = vm.interface.find_file(file_name, dir)
+        output = f"Found {len(result)} matches for {file_name} in {dir}:\n"
+        output += "\n".join(result)
+        return output
     
     @tool
     def search_dir(search_term: str, dir: str = vm.repo_path)->str:
@@ -31,7 +34,13 @@ def create_tools(vm: RepoVM):
         Returns:
             str: The result of the search.
         """
-        return vm.interface.search_dir(search_term, dir)
+        result = vm.interface.search_dir(search_term, dir)
+        output = f"Found {len(result)} matches for {search_term} in {dir}:\n"
+        output += "\n".join([f"{k} ({v} matches)" for k, v in result.items()]) + "\n"
+        output += f"End of matches for {search_term} in {dir}\n"
+        if sum(result.values()) > 50:
+            output += "Exceeded 50 matches. Please narrow your search term."
+        return output
     
     @tool
     def search_file(search_term: str, file_path: str)->str:
@@ -44,9 +53,13 @@ def create_tools(vm: RepoVM):
         Returns:
             str: The result of the search.
         """
-        return vm.interface.search_file(search_term, file_path)
-    
-    
+        result = vm.interface.search_file(search_term, file_path)
+        output = f"Found {len(result)} matches for {search_term} in {file_path}:\n"
+        output += "\n".join([f"Line {k}: {v}" for k, v in result.items()]) + "\n"
+        output += f"End of matches for {search_term} in {file_path}\n"
+        if len(result) > 50:
+            output += "Exceeded 50 matches. Please narrow your search term."
+        return output
     
     @tool
     def open_file(file_path: str, line_number: int = 1)->str:

@@ -4,34 +4,36 @@ import os
 import traceback
 
 class Interface:
-    def find_file(self, file_name: str, dir: str)->str:
-        """find files with the given name.
+    def find_file(self, file_name: str, dir: str)->list[str]:
+        """Finds all files with the given name in a directory.
 
         Args:
-            file_name (str): name of the file to search for
+            file_name (str): Name of the file to search for.
+            dir (str): Directory to search in.
 
         Returns:
-            str: a string containing the list of files found
+            list[str]: A list of file paths.
         """
         
-        result = f'Files with the name "{file_name}" in {os.path.abspath(dir)}:\n'
+        result = []
         for root, _, files in os.walk(dir):
             for file in files:
                 if file_name in file:
-                    result += os.path.abspath(os.path.join(root, file)) + '\n'
+                    result.append(os.path.abspath(os.path.join(root, file)))
         return result
     
-    def search_dir(self, search_term: str, dir: str) -> str:
+    def search_dir(self, search_term: str, dir: str) -> dict[str, int]:
         """
         Search for a specific term in all files within a directory.
 
         Args:
             search_term (str): Term to search for within the files.
+            dir (str): Directory to search within.
 
         Returns:
-            str: A string containing the list of files and matches found.
+            dict[str, int]: A dictionary containing file paths as keys and match counts as values.
         """
-        matches = []
+        matches = {}
         total_matches = 0
 
         for root, _, files in os.walk(dir):
@@ -44,47 +46,36 @@ class Interface:
                         contents = f.readlines()
                     match_count = sum(1 for line in contents if search_term in line)
                     if match_count > 0:
-                        matches.append(f"{os.path.abspath(file_path)}: {match_count} matches")
+                        matches[os.path.abspath(file_path)] = match_count
                         total_matches += match_count
                 except Exception:
                     continue
+                
+        return matches
 
-        result = f'Found {total_matches} matches for "{search_term}" in {os.path.abspath(dir)}:\n'
-        result += "\n".join(matches)
-        result += f'\n\nEnd of matches for "{search_term}" in {os.path.abspath(dir)}.\n'
-        if len(matches) == 50:
-            result += "Found too many matches. Please narrow down your search.\n"
-        return result
-
-    def search_file(self, search_term: str, file_name: str) -> str:
+    def search_file(self, search_term: str, file_name: str) -> dict[int, str]:
         """
-        Search for a specific term in all files within a directory and list lines with matches.
+        Search for a specific term in a file and list lines with matches.
 
         Args:
-            search_term (str): Term to search for within the files.
+            search_term (str): Term to search for within the file.
             file_name (str): Name of the file to search within.
 
         Returns:
-            str: A string containing the list of files and lines with matches found.
+            dict[int, str]: A dictionary with line numbers as keys and matching lines as values.
         """
-        matches = []
-        total_matches = 0
+        matches = {}
 
         with open(file_name, 'r', encoding='utf-8') as f:
             contents = f.readlines()
+        
         for i, line in enumerate(contents):
             if search_term in line:
-                matches.append(f"Line {i+1}: {line.strip()}")
-                total_matches += 1
+                matches[i + 1] = line.strip()
             if len(matches) >= 50:
                 break
-                
-        result = f'Found {total_matches} matches for "{search_term}" in {os.path.abspath(file_name)}:\n'
-        result += "\n".join(matches)
-        result += f'\n\nEnd of matches for "{search_term}" in {file_name}.\n'
-        if len(matches) == 50:
-            result += "Found too many matches. Please narrow down your search.\n"
-        return result
+
+        return matches
     def get_patch_file(self, repo_path: str)->str:
         """Returns the diff of the current version of the software.
 

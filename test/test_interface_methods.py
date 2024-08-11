@@ -25,3 +25,26 @@ def test_get_patch_file_modify():
         vm.interface.write_file(f"{vm.repo_path}/README.md", "Hello, World!")
         patch = vm.interface.get_patch_file(vm.repo_path)
         assert patch != ""
+        
+def test_find_file():
+    with VM_with_interface(image_name=image_name) as vm:
+        file_name = "/test.txt"
+        content = "Hello, World!"
+        vm.interface.write_file(f"{file_name}", content)
+        assert file_name in vm.interface.find_file('test.txt', '/')
+
+def test_search_dir():
+    with VM_with_interface(image_name=image_name) as vm:
+        file_name = "/tmp/test.txt"
+        content = "Hello, World!"
+        vm.interface.write_file(f"{file_name}", content)
+        assert file_name in vm.interface.search_dir('Hello', '/tmp')
+        assert file_name not in vm.interface.search_dir('Goodbye', '/tmp')
+        assert vm.interface.search_dir('Hello', '/tmp')[file_name] == 1
+
+def test_search_file():
+    with VM_with_interface(image_name=image_name) as vm:
+        file_name = "/tmp/test.txt"
+        content = "Hello, World!"
+        vm.interface.write_file(f"{file_name}", content)
+        assert '1' in vm.interface.search_file('Hello', '/tmp/test.txt')

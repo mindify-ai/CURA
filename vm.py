@@ -90,7 +90,7 @@ class RepoVM(VM_with_interface):
         super().__init__(image_name)
         self.repo_name = repo_name
         self.commit_hash = commit_hash
-        self.repo_path = self.repo_name.split('/')[-1]
+        self.repo_path = '/' + self.repo_name.split('/')[-1]
         
     def __enter__(self):
         super().__enter__()
