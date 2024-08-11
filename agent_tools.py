@@ -62,7 +62,7 @@ def create_tools(vm: RepoVM):
 
         Args:
             search_term (str): Term to search for within the file.
-            file_name (str): Name of the file to search within.
+            file_path (str): Name of the file to search within.
 
         Returns:
             str: The result of the search.
@@ -92,8 +92,8 @@ def create_tools(vm: RepoVM):
             file_path=file_path,
             write_file_fn=lambda content: vm.interface.write_file(file_path, content),
             file_content=content,
-            display_lines=100,
-            scroll_line=100,
+            display_lines=300,
+            scroll_line=300
         )
         file_editor.goto_line(line_number)
         return file_editor.display()
