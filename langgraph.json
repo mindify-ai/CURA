@@ -9,6 +9,6 @@
   },
   "env": [
     "OPENAI_API_KEY",
-    "LANGGRAPH_CLOUD_LICENSE_KEY"
+    "LANGCHAIN_API_KEY"
   ]
 }
