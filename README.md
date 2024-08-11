@@ -19,3 +19,9 @@ docker build -t swe_img .
 ```bash
 ReAct_SWE.ipynb
 ```
+
+4. Add .env file to the root directory with the following content:
+
+```bash
+OPENAI_API_KEY=your_openai_api_key
+```
