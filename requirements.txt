@@ -8,3 +8,4 @@ langsmith
 langchain-openai
 python-dotenv
 gitpython
+flask
