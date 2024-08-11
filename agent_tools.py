@@ -8,6 +8,19 @@ def create_tools(vm: RepoVM):
     file_editor: Optional[FileEditor_with_linting] = None
     
     @tool
+    def directory_tree(dir_path: str = vm.repo_path, max_depth: int = 3)->str:
+        """Generates a tree of the directory structure starting from the given directory. This tool is useful for understanding the structure of the repo or a specific directory within the repo.
+
+        Args:
+            dir_path (str, optional): Directory to print the tree of. Defaults to the root directory of the repo.
+            max_depth (int, optional): Maximum depth to print the tree. Defaults to 3.
+
+        Returns:
+            str: The directory tree.
+        """
+        return vm.interface.directory_tree(dir_path, max_depth)
+    
+    @tool
     def find_file(file_name: str, dir: str = vm.repo_path)->str:
         """Finds all files with the given name in dir. If dir is not provided, searches in the root directory of the repo.
 

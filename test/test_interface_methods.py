@@ -48,3 +48,10 @@ def test_search_file():
         content = "Hello, World!"
         vm.interface.write_file(f"{file_name}", content)
         assert '1' in vm.interface.search_file('Hello', '/tmp/test.txt')
+
+def test_directory_tree():
+    with VM_with_interface(image_name=image_name) as vm:
+        file_name = "/tmp/test.txt"
+        content = "Hello, World!"
+        vm.interface.write_file(f"{file_name}", content)
+        assert 'test.txt' in vm.interface.directory_tree('/tmp', 3)

@@ -2,8 +2,13 @@ from flask import Flask, request, jsonify, Response
 import git
 import os
 import traceback
+from directory_tree import display_tree
 
 class Interface:
+    
+    def directory_tree(self, dir: str, max_depth: int)->str:
+        return display_tree(dir_path=dir, string_rep=True, max_depth=max_depth)
+    
     def find_file(self, file_name: str, dir: str)->list[str]:
         """Finds all files with the given name in a directory.
 
