@@ -2,6 +2,8 @@ from langchain_core.tools import tool, BaseTool
 from typing import Optional
 from vm import RepoVM
 from file_editor import FileEditor_with_linting
+from langchain.document_loaders import GithubFileLoader
+import chromadb as chroma
 
 
 def create_tools(vm: RepoVM):
@@ -93,7 +95,7 @@ def create_tools(vm: RepoVM):
             write_file_fn=lambda content: vm.interface.write_file(file_path, content),
             file_content=content,
             display_lines=300,
-            scroll_line=300
+            scroll_line=300,
         )
         file_editor.goto_line(line_number)
         return file_editor.display()
@@ -188,6 +190,60 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
                 )
         else:
             return "Invalid line numbers."
+
+    @tool
+    def index_code_from_codebase(repo_name: str, branch_name: str) -> str:
+        """Fetches the code from the given repo and branch.
+
+        Args:
+            repo_name (str): Name of the repository.
+            branch_name (str): Name of the branch.
+
+        Returns:
+            str: The result of the fetch.
+        """
+        loader = GithubFileLoader(repo_name, branch_name)
+        pathes = loader.get_file_paths()
+
+        files = []
+        for path in pathes:
+            file = loader.get_file_content_by_path(path)
+            if file != None:
+                files.append(file)
+
+        try:
+            db = chroma.Client().create_collection(repo_name)
+            ids = [str(i) for i in range(len(files))]
+            db.add(ids=ids, documents=files)
+        except Exception as e:
+            return f"Failed to index the codebase: {e}"
+
+        return f"Indexed {len(files)} files from {repo_name} on branch {branch_name}."
+
+    @tool
+    def query_code_from_codebase(repo_name: str, question: str) -> str:
+        """Queries the code from the given repo.
+
+        Args:
+            repo_name (str): Name of the repository.
+            question (str): The question to ask to retrieve the code.
+
+        Returns:
+            str: The result of the fetch.
+        """
+
+        db = chroma.Client().get_collection(repo_name)
+
+        try:
+            results = db.query(query_texts=[question])
+
+            if len(results) == 0:
+                return "No results found."
+
+            return results[0]
+
+        except Exception as e:
+            return f"Failed to query the codebase: {e}"
 
     @tool
     def submit() -> str:
