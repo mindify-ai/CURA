@@ -11,7 +11,21 @@ def create_tools(vm: RepoVM):
     file_editor: Optional[FileEditor_with_linting] = None
 
     @tool
-    def directory_tree(dir_path: str = vm.repo_path, max_depth: int = 3) -> str:
+    def bash_command(command: str) -> str:
+        """Executes the given bash command.
+
+        Args:
+            command (str): The command to execute.
+
+        Returns:
+            str: The result of the command.
+        """
+        result = vm.run_command(command)
+        if len(result) > 2000:
+            return result[:2000] + "\nOutput truncated. Please narrow your command."
+        return result
+    @tool
+    def directory_tree(dir_path: str = vm.repo_path, max_depth: int = 1) -> str:
         """Generates a tree of the directory structure starting from the given directory. This tool is useful for understanding the structure of the repo or a specific directory within the repo.
 
         Args:
@@ -21,8 +35,26 @@ def create_tools(vm: RepoVM):
         Returns:
             str: The directory tree.
         """
-        return vm.interface.directory_tree(dir_path, max_depth)
+        
+        result = vm.interface.directory_tree(dir_path, max_depth)
+        if len(result) > 2000:
+            return "The directory tree is too large to display. Please specify a smaller max_depth."
+        return result
 
+    @tool
+    def create_file(file_path: str, content: str = "") -> str:
+        """Creates a new file at the given path with the provided content. If the file already exists, it will be overwritten.
+
+        Args:
+            file_path (str): Path to the file to create.
+            content (str, optional): Content to write to the file. Defaults to an empty string.
+
+        Returns:
+            str: The content of the file.
+        """
+        vm.interface.write_file(file_path, content)
+        return "File created successfully."
+    
     @tool
     def find_file(file_name: str, dir: str = vm.repo_path) -> str:
         """Finds all files with the given name in dir. If dir is not provided, searches in the root directory of the repo.
@@ -94,8 +126,8 @@ def create_tools(vm: RepoVM):
             file_path=file_path,
             write_file_fn=lambda content: vm.interface.write_file(file_path, content),
             file_content=content,
-            display_lines=300,
-            scroll_line=300,
+            display_lines=100,
+            scroll_line=100
         )
         file_editor.goto_line(line_number)
         return file_editor.display()
@@ -254,8 +286,8 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
         """
         patch_content = vm.interface.get_patch_file(vm.repo_path)
         if not patch_content:
-            return "No changes to submit."
+            return ""
         else:
-            return patch_content
+            return patch_content 
 
     return {k: v for k, v in locals().items() if isinstance(v, BaseTool)}
