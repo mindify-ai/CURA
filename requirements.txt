@@ -5,7 +5,7 @@ langchain-core
 langchain-community
 langgraph
 langsmith
-langchain-openai
+langchain-openai==0.1.20
 python-dotenv
 gitpython
 flask
