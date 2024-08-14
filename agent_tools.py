@@ -234,7 +234,7 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
         Returns:
             str: The result of the fetch.
         """
-        loader = GithubFileLoader(repo_name, branch_name)
+        loader = GithubFileLoader(repo=repo_name, branch=branch_name)
         pathes = loader.get_file_paths()
 
         files = []
@@ -272,7 +272,7 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
             if len(results) == 0:
                 return "No results found."
 
-            return results[0]
+            return results["documents"][0][0]
 
         except Exception as e:
             return f"Failed to query the codebase: {e}"

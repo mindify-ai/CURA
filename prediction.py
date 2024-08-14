@@ -37,7 +37,8 @@ user_message = "We're currently solving the following issue within our repositor
 "4. Never use python -c to run code. Instead, write a script and run it with python <script_name>.py.\n"\
 "5. If you need to install a package, never use online package commands. Use local pip install commands. For example, Use pip install /sqlfluff where /sqlfluff is the path to the package instead of pip install sqlfluff.\n"\
 "6. If a command is interactive, add --force if the command supports it. For example, sqlfluff fix --force.\n"\
-"7. If the issue provides a configuration, use it to make sure you are using the same configuration as the issue.\n"
+"7. If the issue provides a configuration, use it to make sure you are using the same configuration as the issue.\n" \
+"8. You will need to index and query the codebase first to understand the structure of the codebase. Use the index tool to index the codebase and the query tool to query the codebase. "\
 
 prompt_template = ChatPromptTemplate(
     messages=[
@@ -60,7 +61,7 @@ def do_prediction(data):
                 "hints": data['hints_text']
             },
             config={
-                "recursion_limit": 50,
+                "recursion_limit": 40,
             }
         )
         submit_patches = [message for message in final_state['messages'] if message.name == 'submit']
