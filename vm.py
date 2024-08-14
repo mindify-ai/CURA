@@ -5,6 +5,7 @@ from interface import Interface, port
 import interface
 import requests
 import time
+from socket import socket
 
 
 class VirtualMachine:
@@ -26,11 +27,11 @@ class VirtualMachine:
     def __exit__(self, exc_type, exc_value, traceback):
         self._container.remove(force=True)
 
-    def run_command(self, command) -> str:
+    def run_command(self, command: str) -> str:
         result = self._container.exec_run(command).output.decode("utf-8")
         return result
 
-    def run_command_async(self, command):
+    def run_command_async(self, command: str):
         self._container.exec_run(command, detach=True)
 
     def copy_file_to_vm(self, src: str, dst: str):
@@ -62,7 +63,7 @@ class VM_with_interface(VirtualMachine):
         self.interface = Interface()
         self._wrap_interface_methods(self.interface)
         self.container_open_port = port
-        self.host_open_port = 5002
+        self.host_open_port = self.get_available_port()
 
         self.host_interface_path = interface.__file__
         self.container_interface_path = "/container_interface.py"
@@ -70,6 +71,17 @@ class VM_with_interface(VirtualMachine):
         self._container_run_params["ports"] = {
             f"{self.container_open_port}/tcp": self.host_open_port
         }
+    def get_available_port(self):
+        start_port = 5000
+        while True:
+            with socket() as s:
+                try:
+                    s.bind(("localhost", start_port))
+                    port = start_port
+                    break
+                except OSError:
+                    start_port += 1
+        return port
 
     def __enter__(self):
         super().__enter__()
@@ -107,5 +119,6 @@ class RepoVM(VM_with_interface):
         super().__enter__()
         url = f"https://github.com/{self.repo_name}.git"
         self.run_command(f"git clone {url}")
-        self.run_command(f"cd {self.repo_path} && git checkout {self.commit_hash}")
+        self.run_command(f"bash -c 'cd {self.repo_path} && git checkout {self.commit_hash}'")
+        self.run_command(f"pip install {self.repo_path}")
         return self

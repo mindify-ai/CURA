@@ -9,3 +9,5 @@ def test_repo_vm_init():
         assert vm.repo_name == test_repo
         assert vm.commit_hash == test_commit_hash
         assert repo_path in vm.run_command("ls /")
+        assert vm.run_command(f"bash -c 'cd {repo_path} && git rev-parse HEAD'").strip() == test_commit_hash
+        

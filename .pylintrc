@@ -3,8 +3,10 @@ ignore=CVS
 jobs=1
 
 [MESSAGES CONTROL]
-disable=trailing-whitespace,missing-docstring,trailing-newlines
+disable=all
 
+enable=syntax-error, undefined-variable, duplicate-code, bad-indentation,
+#enable=F,E
 [REPORTS]
 output-format=text
 

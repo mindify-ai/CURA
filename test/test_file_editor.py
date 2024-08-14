@@ -53,3 +53,52 @@ def test_linting():
     assert editor.lint() == {}
     editor.edit(1, 2, "def test():\n    print('Hello World'\n")
     assert 2 in editor.lint()
+
+def test_goto_line():
+    file = dummy_file()
+    file.content = '\n'.join([str(i) for i in range(1, 100)])
+    editor = FileEditor("test.txt", file.write, file.read(), display_lines=5, scroll_line=5)
+    assert editor._current_line == 0
+    editor.goto_line(10)
+    assert editor._current_line == 9
+    editor.goto_line(1)
+    assert editor._current_line == 0
+    editor.goto_line(100)
+    assert editor._current_line == 94
+    editor.goto_line(1000)
+    assert editor._current_line == 94
+    editor.goto_line(-1)
+    assert editor._current_line == 0
+
+def test_scroll():
+    file = dummy_file()
+    file.content = '\n'.join([str(i) for i in range(1, 100)])
+    editor = FileEditor("test.txt", file.write, file.read(), display_lines=5, scroll_line=5)
+    assert editor._current_line == 0
+    editor.scroll_down()
+    assert editor._current_line == 5
+    editor.scroll_down()
+    assert editor._current_line == 10
+    editor.scroll_up()
+    assert editor._current_line == 5
+    editor.scroll_up()
+    assert editor._current_line == 0
+    editor.scroll_up()
+    assert editor._current_line == 0
+    
+    editor.goto_line(100)
+    assert editor._current_line == 94
+    editor.scroll_down()
+    assert editor._current_line == 94
+    
+    
+def test_display():
+    file = dummy_file()
+    file.content = '\n'.join([str(i) for i in range(1, 100)])
+    editor = FileEditor("test.txt", file.write, file.read(), display_lines=5, scroll_line=5)
+    assert '1' in editor.display()
+    assert '5' in editor.display()
+    
+    editor.goto_line(100)
+    assert '94' in editor.display()
+    assert '99' in editor.display()

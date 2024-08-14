@@ -25,10 +25,10 @@ class FileEditor:
             self._current_line = line_index
         
     def scroll_down(self):
-        self.goto_line(self._current_line + self._scroll_line)
+        self.goto_line(self._current_line + self._scroll_line + 1)
         
     def scroll_up(self):
-        self.goto_line(self._current_line - self._scroll_line)
+        self.goto_line(self._current_line - self._scroll_line + 1)
         
     def display(self)->str:
         output = "-"*49 + "\n"
