@@ -127,7 +127,6 @@ class Interface:
 app = Flask(__name__)
 port = 5001
 
-
 @app.post("/<command>")
 def execute_command(command):
     try:

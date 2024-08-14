@@ -1,4 +1,4 @@
-# Coder-verifier makes LLM a better coding agent
+# CURA - Code understanding and reasoning agent
 
 ## Getting started
 

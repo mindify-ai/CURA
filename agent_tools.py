@@ -235,7 +235,7 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
         db = chroma.Client().get_collection(repo_name)
 
         try:
-            results = db.query(query_texts=[question])
+            results = db.query(query_texts=[question], n_results=1)
 
             if len(results) == 0:
                 return "No results found."

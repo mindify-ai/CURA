@@ -10,3 +10,7 @@ python-dotenv
 gitpython
 flask
 psycopg[binary]>=3.1.19
+markupsafe==2.0.1
+directory_tree
+pylint
+chromadb
