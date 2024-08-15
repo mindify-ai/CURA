@@ -5,7 +5,8 @@ from interface import Interface, port
 import interface
 import requests
 import time
-from socket import socket
+import socket
+import threading
 
 
 class VirtualMachine:
@@ -17,6 +18,7 @@ class VirtualMachine:
         self._image_name = image_name
         self._client = docker.from_env()
         self._container_run_params = {}
+    file_lock = threading.Lock()
 
     def __enter__(self):
         self._container = self._client.containers.run(
@@ -35,26 +37,28 @@ class VirtualMachine:
         self._container.exec_run(command, detach=True)
 
     def copy_file_to_vm(self, src: str, dst: str):
-        with tarfile.open(src + ".tar", "w") as tar:
-            tar.add(src, arcname=os.path.basename(src))
-        data = open(src + ".tar", "rb").read()
-        self._container.put_archive(os.path.dirname(dst), data)
-        self.run_command(
-            f"mv {os.path.join(os.path.dirname(dst), os.path.basename(src))} {dst}"
-        )
-        os.remove(src + ".tar")
+        with self.file_lock:
+            with tarfile.open(src + ".tar", "w") as tar:
+                tar.add(src, arcname=os.path.basename(src))
+            data = open(src + ".tar", "rb").read()
+            self._container.put_archive(os.path.dirname(dst), data)
+            self.run_command(
+                f"mv {os.path.join(os.path.dirname(dst), os.path.basename(src))} {dst}"
+            )
+            os.remove(src + ".tar")
 
     def copy_file_from_vm(self, src, dst):
-        stream, stat = self._container.get_archive(src)
-        with open(dst + ".tar", "wb") as f:
-            for chunk in stream:
-                f.write(chunk)
+        with self.file_lock:
+            stream, stat = self._container.get_archive(src)
+            with open(dst + ".tar", "wb") as f:
+                for chunk in stream:
+                    f.write(chunk)
 
-        with tarfile.open(dst + ".tar") as tar:
-            tar.extractall(path=os.path.dirname(dst))
+            with tarfile.open(dst + ".tar") as tar:
+                tar.extractall(path=os.path.dirname(dst))
 
-        os.rename(os.path.join(os.path.dirname(dst), os.path.basename(src)), dst)
-        os.remove(dst + ".tar")
+            os.rename(os.path.join(os.path.dirname(dst), os.path.basename(src)), dst)
+            os.remove(dst + ".tar")
 
 
 class VM_with_interface(VirtualMachine):
@@ -63,28 +67,31 @@ class VM_with_interface(VirtualMachine):
         self.interface = Interface()
         self._wrap_interface_methods(self.interface)
         self.container_open_port = port
-        self.host_open_port = self.get_available_port()
 
         self.host_interface_path = interface.__file__
         self.container_interface_path = "/container_interface.py"
 
-        self._container_run_params["ports"] = {
-            f"{self.container_open_port}/tcp": self.host_open_port
-        }
+    port_lock = threading.Lock()
+    
     def get_available_port(self):
-        start_port = 5000
-        while True:
-            with socket() as s:
-                try:
-                    s.bind(("localhost", start_port))
-                    port = start_port
-                    break
-                except OSError:
-                    start_port += 1
-        return port
-
+        def is_open_port(port: int)-> bool:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                result = s.connect_ex(('localhost', port))
+                return result != 0
+        current_port = 1024
+        while not is_open_port(current_port):
+            current_port += 1
+        return current_port
+    
+    
     def __enter__(self):
-        super().__enter__()
+        with self.port_lock:
+            self.host_open_port = self.get_available_port()
+            self._container_run_params["ports"] = {
+                f"{self.container_open_port}/tcp": self.host_open_port
+            }
+            super().__enter__()
+            time.sleep(0.1)
         self.copy_file_to_vm(self.host_interface_path, self.container_interface_path)
         self.run_command_async(f"python {self.container_interface_path}")
         time.sleep(0.3)

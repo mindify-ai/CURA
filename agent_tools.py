@@ -4,6 +4,8 @@ from vm import RepoVM
 from file_editor import FileEditor_with_linting
 from langchain.document_loaders import GithubFileLoader
 import chromadb as chroma
+from utils import timeout
+import asyncio
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import concurrent.futures
 from tqdm import tqdm
@@ -23,7 +25,13 @@ def create_tools(vm: RepoVM):
         Returns:
             str: The result of the command.
         """
-        result = vm.run_command(command)
+        @timeout(60)
+        def run_command_with_timeout(command):
+            return vm.run_command(command)
+        try:
+            result = run_command_with_timeout(command)
+        except asyncio.TimeoutError:
+            return "Command timed out after 60 seconds. Please try a different command."
         if len(result) > 2000:
             return result[:2000] + "\nOutput truncated. Please narrow your command."
         return result
