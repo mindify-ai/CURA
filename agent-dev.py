@@ -1,6 +1,6 @@
 # %%
 from tqdm import tqdm
-import dotenv
+import dotenv}:
 dotenv.load_dotenv()
 
 # %%
@@ -8,7 +8,7 @@ from datasets import load_dataset
 swebench = load_dataset('princeton-nlp/SWE-bench', split='test')
 
 # Randomly select a test set with 10 samples
-num_samples = int(len(swebench) * 0.25)
+num_samples = int(len(swebench) * 0.05)
 print(num_samples)
 test_set = swebench.shuffle(seed=42).select(range(num_samples))
 

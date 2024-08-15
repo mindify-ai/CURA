@@ -4,7 +4,7 @@ import sys
 sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
 
 from langchain_core.tools import tool, BaseTool
-from langchain.document_loaders import GithubFileLoader
+from langchain_community.document_loaders import GithubFileLoader
 from typing import Optional
 import chromadb as chroma
 import asyncio
@@ -323,8 +323,7 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
                 print(f.result())
 
         try:
-            results = collection.query(query_texts=[question])
-
+            results = collection.query(query_texts=[question], n_results=3)
             if len(results) == 0:
                 return "No results found."
 
