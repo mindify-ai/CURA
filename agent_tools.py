@@ -4,7 +4,10 @@ from vm import RepoVM
 from file_editor import FileEditor_with_linting
 from langchain.document_loaders import GithubFileLoader
 import chromadb as chroma
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import concurrent.futures
+from tqdm import tqdm
+from chromadb import Collection
 
 def create_tools(vm: RepoVM):
 
@@ -24,6 +27,7 @@ def create_tools(vm: RepoVM):
         if len(result) > 2000:
             return result[:2000] + "\nOutput truncated. Please narrow your command."
         return result
+
     @tool
     def directory_tree(dir_path: str = vm.repo_path, max_depth: int = 1) -> str:
         """Generates a tree of the directory structure starting from the given directory. This tool is useful for understanding the structure of the repo or a specific directory within the repo.
@@ -35,7 +39,7 @@ def create_tools(vm: RepoVM):
         Returns:
             str: The directory tree.
         """
-        
+
         result = vm.interface.directory_tree(dir_path, max_depth)
         if len(result) > 2000:
             return "The directory tree is too large to display. Please specify a smaller max_depth."
@@ -54,7 +58,7 @@ def create_tools(vm: RepoVM):
         """
         vm.interface.write_file(file_path, content)
         return "File created successfully."
-    
+
     @tool
     def find_file(file_name: str, dir: str = vm.repo_path) -> str:
         """Finds all files with the given name in dir. If dir is not provided, searches in the root directory of the repo.
@@ -127,7 +131,7 @@ def create_tools(vm: RepoVM):
             write_file_fn=lambda content: vm.interface.write_file(file_path, content),
             file_content=content,
             display_lines=100,
-            scroll_line=100
+            scroll_line=100,
         )
         file_editor.goto_line(line_number)
         return file_editor.display()
@@ -223,51 +227,85 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
         else:
             return "Invalid line numbers."
 
+    def fetch_file_content(loader: GithubFileLoader, path):
+        try:
+            file = loader.get_file_content_by_path(path)
+            if file is not None:
+                return file
+        except Exception as e:
+            # print(f"Error fetching file {path}: {e}")
+            return None, path
+        
+    def index_batch(start, end, index_batch_size, contents, collection: Collection):
+        try:
+            collection.add(
+                ids=[str(i) for i in range(start, end, index_batch_size)],
+                documents=str(contents[start:end]),
+            )
+            return f"Batch {start}-{end} indexed successfully!"
+        except Exception as e:
+            return f"Error indexing batch {start}-{end}: {e}"
+            
     @tool
-    def index_code_from_codebase(repo_name: str, branch_name: str) -> str:
-        """Fetches the code from the given repo and branch.
+    def query_code_from_codebase(
+        account_name: str, repo_name: str, branch_name: str, question: str
+    ) -> str:
+        """Indexes the codebase of the given repository and queries it with the provided question. The question should be a natural language query about the codebase.
 
         Args:
+            account_name (str): Name of the account.
             repo_name (str): Name of the repository.
             branch_name (str): Name of the branch.
+            question (str): Question about the codebase
 
         Returns:
-            str: The result of the fetch.
+            str: The result of the repo
         """
-        loader = GithubFileLoader(repo=repo_name, branch=branch_name)
-        pathes = loader.get_file_paths()
+        repo = f"{account_name}/{repo_name}"
+        print(repo)
+        loader = GithubFileLoader(
+            repo=repo,
+            branch=branch_name,
+            access_token="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",
+        )
+        file_paths = loader.get_file_paths()
 
         files = []
-        for path in pathes:
-            file = loader.get_file_content_by_path(path)
-            if file != None:
-                files.append(file)
+
+        print("Ingesting files from the repository...")
+
+        with ThreadPoolExecutor() as executor:
+            futures = {
+                executor.submit(fetch_file_content, loader, file_path["path"]): file_path
+                for file_path in file_paths
+            }
+
+            for future in tqdm(as_completed(futures), total=len(futures)):
+                file = future.result()
+                if file is not None:
+                    files.append(file)
+                    
+        index_batch_size = int(len(files) // 10)
+        collection = chroma.Client().create_collection(f"{repo_name}_collection")
+        
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            results = [
+                executor.submit(
+                    index_batch,
+                    i,
+                    min(i + index_batch_size, len(files)),
+                    index_batch_size,
+                    files,
+                    collection,
+                )
+                for i in range(0, len(files), index_batch_size)
+            ]
+
+            for f in tqdm(concurrent.futures.as_completed(results), total=len(results)):
+                print(f.result())
 
         try:
-            db = chroma.Client().create_collection(repo_name)
-            ids = [str(i) for i in range(len(files))]
-            db.add(ids=ids, documents=files)
-        except Exception as e:
-            return f"Failed to index the codebase: {e}"
-
-        return f"Indexed {len(files)} files from {repo_name} on branch {branch_name}."
-
-    @tool
-    def query_code_from_codebase(repo_name: str, question: str) -> str:
-        """Queries the code from the given repo.
-
-        Args:
-            repo_name (str): Name of the repository.
-            question (str): The question to ask to retrieve the code.
-
-        Returns:
-            str: The result of the fetch.
-        """
-
-        db = chroma.Client().get_collection(repo_name)
-
-        try:
-            results = db.query(query_texts=[question], n_results=1)
+            results = collection.query(query_texts=[question])
 
             if len(results) == 0:
                 return "No results found."
@@ -288,6 +326,6 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
         if not patch_content:
             return ""
         else:
-            return patch_content 
+            return patch_content
 
     return {k: v for k, v in locals().items() if isinstance(v, BaseTool)}
