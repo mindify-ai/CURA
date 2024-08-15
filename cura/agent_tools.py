@@ -1,15 +1,21 @@
+__import__("pysqlite3")
+import sys
+
+sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+
 from langchain_core.tools import tool, BaseTool
-from typing import Optional
-from vm import RepoVM
-from file_editor import FileEditor_with_linting
 from langchain.document_loaders import GithubFileLoader
+from typing import Optional
 import chromadb as chroma
-from utils import timeout
 import asyncio
+from cura.vm import RepoVM
+from cura.file_editor import FileEditor_with_linting
+from cura.utils import timeout
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import concurrent.futures
 from tqdm import tqdm
 from chromadb import Collection
+
 
 def create_tools(vm: RepoVM):
 
@@ -25,9 +31,11 @@ def create_tools(vm: RepoVM):
         Returns:
             str: The result of the command.
         """
+
         @timeout(60)
         def run_command_with_timeout(command):
             return vm.run_command(command)
+
         try:
             result = run_command_with_timeout(command)
         except asyncio.TimeoutError:
@@ -243,7 +251,7 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
         except Exception as e:
             # print(f"Error fetching file {path}: {e}")
             return None, path
-        
+
     def index_batch(start, end, index_batch_size, contents, collection: Collection):
         try:
             collection.add(
@@ -253,7 +261,7 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
             return f"Batch {start}-{end} indexed successfully!"
         except Exception as e:
             return f"Error indexing batch {start}-{end}: {e}"
-            
+
     @tool
     def query_code_from_codebase(
         account_name: str, repo_name: str, branch_name: str, question: str
@@ -284,7 +292,9 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
 
         with ThreadPoolExecutor() as executor:
             futures = {
-                executor.submit(fetch_file_content, loader, file_path["path"]): file_path
+                executor.submit(
+                    fetch_file_content, loader, file_path["path"]
+                ): file_path
                 for file_path in file_paths
             }
 
@@ -292,10 +302,10 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
                 file = future.result()
                 if file is not None:
                     files.append(file)
-                    
+
         index_batch_size = int(len(files) // 10)
         collection = chroma.Client().create_collection(f"{repo_name}_collection")
-        
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             results = [
                 executor.submit(

@@ -3,8 +3,8 @@ import dotenv
 
 from langgraph.prebuilt import create_react_agent
 from langchain_openai import ChatOpenAI
-from vm import RepoVM
-from agent_tools import create_tools
+from cura.vm import RepoVM
+from cura.agent_tools import create_tools
 from langchain_core.prompts import ChatPromptTemplate
 dotenv.load_dotenv()
 

@@ -1,8 +1,8 @@
 import docker
 import tarfile
 import os
-from interface import Interface, port
-import interface
+from cura.interface import Interface, port
+from cura import interface
 import requests
 import time
 import socket

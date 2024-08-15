@@ -14,3 +14,4 @@ markupsafe==2.0.1
 directory_tree
 pylint
 chromadb
+pysqlite3-binary
