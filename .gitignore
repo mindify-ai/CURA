@@ -163,3 +163,5 @@ cython_debug/
 
 .vscode/
 data/
+logs/
+langsmith_feedback/
