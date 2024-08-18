@@ -1,4 +1,4 @@
-from file_editor import FileEditor, FileEditor_with_linting
+from cura.file_editor import FileEditor, FileEditor_with_linting
 import pytest
 
 class dummy_file:

@@ -1,4 +1,4 @@
-from vm import VM_with_interface
+from cura.vm import VM_with_interface
 import threading
 import time
 

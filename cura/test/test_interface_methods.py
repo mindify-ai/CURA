@@ -1,4 +1,4 @@
-from vm import VM_with_interface, RepoVM
+from cura.vm import VM_with_interface, RepoVM
 image_name = "swe_img:latest"
 test_repo = "sqlfluff/sqlfluff"
 test_commit_hash = "c7e791d5ff3bf681a1eb2d717a69c8e166029c42"
