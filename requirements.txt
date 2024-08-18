@@ -15,3 +15,4 @@ directory_tree
 pylint
 chromadb
 pysqlite3-binary
+git+https://github.com/princeton-nlp/SWE-bench.git#egg=swebench
