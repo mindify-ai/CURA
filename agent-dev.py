@@ -1,6 +1,6 @@
 # %%
 from tqdm import tqdm
-import dotenv}:
+import dotenv
 dotenv.load_dotenv()
 
 # %%
