@@ -1,4 +1,4 @@
-from utils import timeout
+from cura.utils import timeout
 import asyncio
 
 def test_timeout():

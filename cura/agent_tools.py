@@ -319,15 +319,21 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
                 for i in range(0, len(files), index_batch_size)
             ]
 
-            for f in tqdm(concurrent.futures.as_completed(results), total=len(results)):
-                print(f.result())
+            for future in tqdm(as_completed(results), total=len(results)):
+                print(future.result())
 
         try:
-            results = collection.query(query_texts=[question], n_results=3)
+            results = collection.query(query_texts=[question], n_results=1)
             if len(results) == 0:
                 return "No results found."
 
-            return results["documents"][0][0]
+            prompt = f"Querying the codebase with the question: {results['documents'][0][0]} to find the file location. With the format: Path: cura/agent_tools.py"
+
+            file_location = collection.query(query_texts=[prompt], n_results=1)[0][0]
+
+            file_location = file_location.split("Path: ")[1]
+
+            return file_location
 
         except Exception as e:
             return f"Failed to query the codebase: {e}"

@@ -1,4 +1,4 @@
-from vm import VirtualMachine
+from cura.vm import VirtualMachine
 import tempfile
 
 def test_vm_init():
