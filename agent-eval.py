@@ -26,7 +26,7 @@ dataset = client.upload_csv(
 # %%
 from langsmith.evaluation import evaluate
 from langsmith import Client
-from prediction import do_prediction
+from cura.prediction import do_prediction
 import random
 
 client = Client()
