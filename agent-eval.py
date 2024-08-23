@@ -7,7 +7,7 @@ import pandas as pd
 from langsmith import Client
 
 splits = {'dev': 'data/dev-00000-of-00001.parquet', 'test': 'data/test-00000-of-00001.parquet', 'train': 'data/train-00000-of-00001.parquet'}
-df = pd.read_parquet("hf://datasets/princeton-nlp/SWE-bench/" + splits["test"])
+df = pd.read_parquet("hf://datasets/princeton-nlp/SWE-bench_Verified/" + splits["test"])
 df['version'] = df['version'].apply(lambda x: f"version:{x}")
 df.to_csv("data/SWE-bench-test.csv",index=False)
 
@@ -19,7 +19,7 @@ dataset = client.upload_csv(
     csv_file="data/SWE-bench-test.csv",
     input_keys=list(df.columns),
     output_keys=[],
-    name="swe-bench-test-eval-2",
+    name="swe-bench-test-eval-verified-4",
     description="SWE-bench-test dataset",
     data_type="kv"
 )
@@ -46,6 +46,7 @@ test_dataset = list(client.list_examples(dataset_id=dataset.id))
 result = evaluate(
     predict,
     data=test_dataset,
+    max_concurrency=1,
 )
 
 
