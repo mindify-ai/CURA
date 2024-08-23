@@ -1,12 +1,13 @@
+"""
 __import__("pysqlite3")
 import sys
 
 sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
-
+"""
 from langchain_core.tools import tool, BaseTool
 from langchain_community.document_loaders import GithubFileLoader
 from typing import Optional
-import chromadb as chroma
+#import chromadb as chroma
 import asyncio
 from cura.vm import RepoVM
 from cura.file_editor import FileEditor_with_linting
@@ -14,7 +15,7 @@ from cura.utils import timeout
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import concurrent.futures
 from tqdm import tqdm
-from chromadb import Collection
+#from chromadb import Collection
 
 
 def create_tools(vm: RepoVM):
@@ -242,7 +243,7 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
                 )
         else:
             return "Invalid line numbers."
-
+    """
     def fetch_file_content(loader: GithubFileLoader, path):
         try:
             file = loader.get_file_content_by_path(path)
@@ -266,7 +267,7 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
     def query_code_from_codebase(
         account_name: str, repo_name: str, branch_name: str, question: str
     ) -> str:
-        """Indexes the codebase of the given repository and queries it with the provided question. The question should be a natural language query about the codebase.
+        Indexes the codebase of the given repository and queries it with the provided question. The question should be a natural language query about the codebase.
 
         Args:
             account_name (str): Name of the account.
@@ -276,7 +277,7 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
 
         Returns:
             str: The result of the repo
-        """
+        
         repo = f"{account_name}/{repo_name}"
         print(repo)
         loader = GithubFileLoader(
@@ -337,7 +338,7 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
 
         except Exception as e:
             return f"Failed to query the codebase: {e}"
-
+    """
     @tool
     def submit() -> str:
         """Submit all the repo changes and close the session. You must use this tool after all the changes are made.

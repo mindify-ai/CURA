@@ -14,19 +14,19 @@ df.to_csv("data/SWE-bench-test.csv",index=False)
 
 
 client = Client()
+
 dataset = client.upload_csv(
     csv_file="data/SWE-bench-test.csv",
     input_keys=list(df.columns),
     output_keys=[],
-    name="swe-bench-test",
+    name="swe-bench-test-eval-2",
     description="SWE-bench-test dataset",
     data_type="kv"
 )
-
 # %%
 from langsmith.evaluation import evaluate
 from langsmith import Client
-from prediction import do_prediction
+from cura.prediction import do_prediction
 import random
 
 client = Client()
@@ -38,18 +38,17 @@ def predict(inputs: dict):
         "model_name_or_path":"test-model"
     }
 
-test_dataset = list(client.list_examples(dataset_id="9afe7b08-5fee-4338-8d8f-b0dbfb677307"))
+test_dataset = list(client.list_examples(dataset_id=dataset.id))
 # random sample 10 examples from the dataset
-random.seed(42)
-random_examples = random.sample(test_dataset, 10)
+#random.seed(42)
+#random_examples = random.sample(test_dataset, 10)
 
 result = evaluate(
     predict,
-    data=random_examples,
+    data=test_dataset,
 )
 
-# %%
-list(client.list_examples(dataset_id="8250d985-8f81-46b4-8b62-bd0a8e91e9d4",splits=["test"]))
+
 
 # %%
 from swebench.harness.run_evaluation import run_instances
