@@ -19,7 +19,7 @@ dataset = client.upload_csv(
     csv_file="data/SWE-bench-test.csv",
     input_keys=list(df.columns),
     output_keys=[],
-    name="swe-bench-test-eval-verified-4",
+    name="swe-bench-test-eval-verified-6",
     description="SWE-bench-test dataset",
     data_type="kv"
 )
