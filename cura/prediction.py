@@ -8,7 +8,8 @@ from cura.agent_tools import create_tools
 from langchain_core.prompts import ChatPromptTemplate
 dotenv.load_dotenv()
 
-system_prompt = "You are an autonomous programmer, and you are working with several tools to help you solve software engineering problems."
+system_prompt = "You are an autonomous programmer, and you are working with several tools to help you solve software engineering problems step by step. "\
+"Your goal is to solve the issue provided by the user. You can use the tools provided to help you solve the issue. "
 
 user_message = "We're currently solving the following issue within our repository.\n"\
 "REPOSITORY: \n"\
@@ -37,7 +38,7 @@ user_message = "We're currently solving the following issue within our repositor
 "4. Never use python -c to run code. Instead, write a script and run it with python <script_name>.py.\n"\
 "5. If you need to install a package, never use online package commands. Use local pip install commands. For example, Use pip install /sqlfluff where /sqlfluff is the path to the package instead of pip install sqlfluff.\n"\
 "6. If a command is interactive, add --force if the command supports it. For example, sqlfluff fix --force.\n"\
-"7. If the issue provides a configuration, use it to make sure you are using the same configuration as the issue.\n" \
+"7. If the issue provides a configuration, use it to make sure you are using the same configuration as the issue.\n"      
 
 prompt_template = ChatPromptTemplate(
     messages=[
@@ -49,18 +50,18 @@ prompt_template = ChatPromptTemplate(
 def do_prediction(data):
     with RepoVM(image_name='swe_img:latest', repo_name=data['repo'], commit_hash=data['base_commit']) as vm:
         
-        llm = ChatOpenAI(model='gpt-4o-mini', temperature=0)
+        llm = ChatOpenAI(model='gpt-4o', temperature=0, top_p=0.95)
         tools = create_tools(vm)
         agent = prompt_template | create_react_agent(llm, tools=tools.values())
 
-        final_state = agent.invoke(
+        final_state = agent.invoke( 
             input={
                 "repo": data['repo'],
                 "issue": data['problem_statement'],
                 "hints": data['hints_text']
             },
             config={
-                "recursion_limit": 128,
+                "recursion_limit": 32,
             }
         )
         submit_patches = [message for message in final_state['messages'] if message.name == 'submit']

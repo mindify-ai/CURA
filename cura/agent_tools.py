@@ -33,14 +33,19 @@ def create_tools(vm: RepoVM):
             str: The result of the command.
         """
 
-        @timeout(60)
+        @timeout(120)
         def run_command_with_timeout(command):
-            return vm.run_command(command)
+            # Run the async command in the event loop
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(vm.run_command(command))
+            loop.close()
+            return result
 
         try:
             result = run_command_with_timeout(command)
         except asyncio.TimeoutError:
-            return "Command timed out after 60 seconds. Please try a different command."
+            return "Command timed out after 120 seconds. Please try a different command."
         if len(result) > 2000:
             return result[:2000] + "\nOutput truncated. Please narrow your command."
         return result
