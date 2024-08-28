@@ -16,3 +16,5 @@ pylint
 chromadb
 pysqlite3
 git+https://github.com/princeton-nlp/SWE-bench.git#egg=swebench
+langchain-huggingface
+langchain-text-splitters

@@ -1,21 +1,9 @@
-"""
-__import__("pysqlite3")
-import sys
-
-sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
-"""
 from langchain_core.tools import tool, BaseTool
-from langchain_community.document_loaders import GithubFileLoader
 from typing import Optional
-#import chromadb as chroma
 import asyncio
 from cura.vm import RepoVM
 from cura.file_editor import FileEditor_with_linting
 from cura.utils import timeout
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import concurrent.futures
-from tqdm import tqdm
-#from chromadb import Collection
 
 
 def create_tools(vm: RepoVM):
@@ -157,7 +145,7 @@ def create_tools(vm: RepoVM):
         )
         file_editor.goto_line(line_number)
         return file_editor.display()
-
+    
     @tool
     def goto_line(line_number: int) -> str:
         """Moves the window to the given line in the editor. You must open a file first.
@@ -248,102 +236,6 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
                 )
         else:
             return "Invalid line numbers."
-    """
-    def fetch_file_content(loader: GithubFileLoader, path):
-        try:
-            file = loader.get_file_content_by_path(path)
-            if file is not None:
-                return file
-        except Exception as e:
-            # print(f"Error fetching file {path}: {e}")
-            return None, path
-
-    def index_batch(start, end, index_batch_size, contents, collection: Collection):
-        try:
-            collection.add(
-                ids=[str(i) for i in range(start, end, index_batch_size)],
-                documents=str(contents[start:end]),
-            )
-            return f"Batch {start}-{end} indexed successfully!"
-        except Exception as e:
-            return f"Error indexing batch {start}-{end}: {e}"
-
-    @tool
-    def query_code_from_codebase(
-        account_name: str, repo_name: str, branch_name: str, question: str
-    ) -> str:
-        Indexes the codebase of the given repository and queries it with the provided question. The question should be a natural language query about the codebase.
-
-        Args:
-            account_name (str): Name of the account.
-            repo_name (str): Name of the repository.
-            branch_name (str): Name of the branch.
-            question (str): Question about the codebase
-
-        Returns:
-            str: The result of the repo
-        
-        repo = f"{account_name}/{repo_name}"
-        print(repo)
-        loader = GithubFileLoader(
-            repo=repo,
-            branch=branch_name,
-            access_token="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",
-        )
-        file_paths = loader.get_file_paths()
-
-        files = []
-
-        print("Ingesting files from the repository...")
-
-        with ThreadPoolExecutor() as executor:
-            futures = {
-                executor.submit(
-                    fetch_file_content, loader, file_path["path"]
-                ): file_path
-                for file_path in file_paths
-            }
-
-            for future in tqdm(as_completed(futures), total=len(futures)):
-                file = future.result()
-                if file is not None:
-                    files.append(file)
-
-        index_batch_size = int(len(files) // 10)
-        collection = chroma.Client().create_collection(f"{repo_name}_collection")
-
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            results = [
-                executor.submit(
-                    index_batch,
-                    i,
-                    min(i + index_batch_size, len(files)),
-                    index_batch_size,
-                    files,
-                    collection,
-                )
-                for i in range(0, len(files), index_batch_size)
-            ]
-
-            for future in tqdm(as_completed(results), total=len(results)):
-                print(future.result())
-
-        try:
-            results = collection.query(query_texts=[question], n_results=1)
-            if len(results) == 0:
-                return "No results found."
-
-            prompt = f"Querying the codebase with the question: {results['documents'][0][0]} to find the file location. With the format: Path: cura/agent_tools.py"
-
-            file_location = collection.query(query_texts=[prompt], n_results=1)[0][0]
-
-            file_location = file_location.split("Path: ")[1]
-
-            return file_location
-
-        except Exception as e:
-            return f"Failed to query the codebase: {e}"
-    """
     @tool
     def submit() -> str:
         """Submit all the repo changes and close the session. You must use this tool after all the changes are made.
