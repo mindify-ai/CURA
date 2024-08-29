@@ -18,3 +18,4 @@ chromadb
 git+https://github.com/princeton-nlp/SWE-bench.git#egg=swebench
 langchain-chroma
 pysqlite3-binary
+langchain-huggingface
