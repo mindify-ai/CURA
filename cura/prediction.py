@@ -60,7 +60,7 @@ def do_prediction(data):
                 "hints": data['hints_text']
             },
             config={
-                "recursion_limit": 128,
+                "recursion_limit": 64,
             }
         )
         submit_patches = [message for message in final_state['messages'] if message.name == 'submit']
