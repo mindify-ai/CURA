@@ -1,3 +1,6 @@
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 # %%
 import dotenv
 dotenv.load_dotenv()
@@ -17,7 +20,7 @@ dataset = client.upload_csv(
     csv_file="data/SWE-bench-test.csv",
     input_keys=list(df.columns),
     output_keys=[],
-    name="swe-bench-test-eval-verified-13",
+    name="swe-bench-test-eval-verified-25",
     description="SWE-bench-test dataset",
     data_type="kv"
 )
