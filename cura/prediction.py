@@ -50,7 +50,7 @@ prompt_template = ChatPromptTemplate(
 def do_prediction(data):
     with RepoVM(image_name='swe_img:latest', repo_name=data['repo'], commit_hash=data['base_commit']) as vm:
         
-        llm = ChatOpenAI(model='gpt-4o', temperature=0, top_p=0.95)
+        llm = ChatOpenAI(model='gpt-4o-mini', temperature=0, top_p=0.95)
         tools = create_tools(vm)
         agent = prompt_template | create_react_agent(llm, tools=tools.values())
 
