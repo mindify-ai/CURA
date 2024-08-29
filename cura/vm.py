@@ -7,7 +7,8 @@ import requests
 import time
 import socket
 import threading
-
+from cura.code_base import CodeBase
+from typing import Optional
 
 class VirtualMachine:
     """
@@ -116,11 +117,12 @@ class VM_with_interface(VirtualMachine):
 
 
 class RepoVM(VM_with_interface):
-    def __init__(self, image_name: str, repo_name: str, commit_hash: str):
+    def __init__(self, image_name: str, repo_name: str, commit_hash: str, code_base: Optional[CodeBase] = None):
         super().__init__(image_name)
         self.repo_name = repo_name
         self.commit_hash = commit_hash
         self.repo_path = "/" + self.repo_name.split("/")[-1]
+        self.code_base = code_base
 
     def __enter__(self):
         super().__enter__()
@@ -128,4 +130,14 @@ class RepoVM(VM_with_interface):
         self.run_command(f"git clone {url}")
         self.run_command(f"bash -c 'cd {self.repo_path} && git checkout {self.commit_hash}'")
         self.run_command(f"pip install {self.repo_path}")
+        if self.code_base is None:
+            self.create_code_base()
         return self
+
+    def create_code_base(self):
+        code_base_name = "_".join(self.repo_name.split("/") + [self.commit_hash])
+        self.code_base = CodeBase(code_base_name, self.interface.get_file_content)
+        if self.code_base.empty:
+            print("Code base is empty, creating new code base.")
+            python_files = self.interface.find_file(".py", self.repo_path)
+            self.code_base.add_files(python_files)

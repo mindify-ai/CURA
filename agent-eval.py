@@ -11,15 +11,17 @@ df = pd.read_parquet("hf://datasets/princeton-nlp/SWE-bench_Verified/" + splits[
 df['version'] = df['version'].apply(lambda x: f"version:{x}")
 df.to_csv("data/SWE-bench-test.csv",index=False)
 
-
-
 client = Client()
 
 dataset = client.upload_csv(
     csv_file="data/SWE-bench-test.csv",
     input_keys=list(df.columns),
     output_keys=[],
+<<<<<<< HEAD
     name="swe-bench-test-eval-verified-8",
+=======
+    name="swe-bench-test-eval-verified-13",
+>>>>>>> 1f9cce2cbffcefed8ab95beb7f121572cb6b3459
     description="SWE-bench-test dataset",
     data_type="kv"
 )

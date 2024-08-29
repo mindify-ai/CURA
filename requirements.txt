@@ -14,5 +14,12 @@ markupsafe==2.0.1
 directory_tree
 pylint
 chromadb
+<<<<<<< HEAD
 #pysqlite3
 git+https://github.com/princeton-nlp/SWE-bench.git#egg=swebench
+=======
+pysqlite3
+git+https://github.com/princeton-nlp/SWE-bench.git#egg=swebench
+langchain-huggingface
+langchain-text-splitters
+>>>>>>> 1f9cce2cbffcefed8ab95beb7f121572cb6b3459
