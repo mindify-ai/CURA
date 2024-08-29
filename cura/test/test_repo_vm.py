@@ -22,6 +22,8 @@ code_base = None
 @pytest.mark.parametrize("search_term, expected_file", [
     ('def dialect_shell_complete(ctx, param, incomplete) -> List["CompletionItem"]:', 'autocomplete.py'),
     ('autocomplete', 'autocomplete.py'),
+    ('find file name with discovery', 'discovery.py'),
+    ('find the definition of Dialect class', 'dialects/base.py'),
 ])
 def test_repo_vm_vector_database_search(search_term: str, expected_file: str):
     global code_base

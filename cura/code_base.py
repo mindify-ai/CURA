@@ -32,7 +32,12 @@ class CodeBase:
         self.retriever = ParentDocumentRetriever(
             vectorstore=self.vector_store,
             docstore=self.storage,
-            child_splitter=RecursiveCharacterTextSplitter()
+            child_splitter=RecursiveCharacterTextSplitter(),
+            search_type="mmr",
+            search_kwargs={
+                'k': 20,
+                #'score_threshold': 0.05,
+            }
         )
     
     def add_files(self, files: set[str]):

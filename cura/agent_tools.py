@@ -125,6 +125,24 @@ def create_tools(vm: RepoVM):
         if len(result) > 50:
             output += "Exceeded 50 matches. Please narrow your search term."
         return output
+    
+    @tool
+    def search_file_fuzzy(query: str) -> str:
+        """Searches for file paths that match the given fuzzy query. The input query will be transformed into an embedding and compared to the repository's file content embeddings. The closest matches will be returned.
+
+        Args:
+            query (str): The query to search for.
+
+        Returns:
+            str: The result of the search. It will be a list of file paths.
+        """
+        result = vm.code_base.retrieve_files(query)
+        result_paths = [doc.metadata["file_path"] for doc in result]
+        output = f"Found {len(result)} matches for {query}:\n"
+        output += "\n".join(result_paths) + "\n"
+        output += f"End of matches for {query}\n"
+        
+        return output
 
     @tool
     def open_file(file_path: str, line_number: int = 1) -> str:
