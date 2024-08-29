@@ -1,12 +1,20 @@
-import asyncio
 from functools import wraps
 import time
+from concurrent.futures import ThreadPoolExecutor
+
+executor = ThreadPoolExecutor()
 
 def timeout(seconds: float):
+    """Decorator to add a timeout to a function. If the function does not return within the timeout, a concurrent.futures.TimeoutError is raised.
+
+    Args:
+        seconds (float): The timeout in seconds.
+    """
     def decorator(func):
         @wraps(func)
-        async def wrapper(*args, **kwargs):
-            return await asyncio.wait_for(func(*args, **kwargs), timeout=seconds)
+        def wrapper(*args, **kwargs):
+            future = executor.submit(func, *args, **kwargs)
+            return future.result(timeout=seconds)
         return wrapper
     return decorator
 

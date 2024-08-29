@@ -26,12 +26,7 @@ def create_tools(vm: RepoVM):
 
         @timeout(120)
         def run_command_with_timeout(command):
-            # Run the async command in the event loop
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(vm.run_command(command))
-            loop.close()
-            return result
+            return vm.run_command(command)
 
         try:
             result = run_command_with_timeout(command)
@@ -88,7 +83,7 @@ def create_tools(vm: RepoVM):
         output += "\n".join(result)
         return output
 
-    @tool
+    #@tool
     def search_dir(search_term: str, dir: str = vm.repo_path) -> str:
         """Searches for a specific term in all files within a directory. If dir is not provided, searches in the root directory of the repo.
 
