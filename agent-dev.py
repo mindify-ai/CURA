@@ -1,23 +1,28 @@
-# %%
 from tqdm import tqdm
 import dotenv
+from cura.prediction import do_prediction
+from datasets import load_dataset
+from concurrent.futures import ThreadPoolExecutor, as_completed
 dotenv.load_dotenv()
 
-# %%
-from datasets import load_dataset
-swebench = load_dataset('princeton-nlp/SWE-bench', split='test')
+def main():
+    swebench = load_dataset('princeton-nlp/SWE-bench_Verified', split='test')
 
-# Randomly select a test set with 10 samples
-num_samples = int(len(swebench) * 0.05)
-print(num_samples)
-test_set = swebench.shuffle(seed=42).select(range(num_samples))
+    num_samples = 5
+    test_set = swebench.shuffle(seed=42).select(range(num_samples))
 
-print(test_set)
+    results = []
 
-from cura.prediction import do_prediction
-results = []
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [executor.submit(do_prediction, test_set[i]) for i in range(num_samples)]
+        for future in tqdm(as_completed(futures), total=num_samples):
+            try:
+                result = future.result()
+                results.append(result)
+            except Exception as e:
+                print(f"An error occurred: {e}")
 
-for i in tqdm(range(num_samples)):
-    results.append(do_prediction(test_set[i]))
-    
-print(results)
+    print(results)
+
+if __name__ == '__main__':
+    main()
