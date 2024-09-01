@@ -178,7 +178,7 @@ def create_tools(vm: RepoVM):
         file_editor.goto_line(line_number)
         return file_editor.display()
 
-    @tool
+    #@tool
     def scroll_down() -> str:
         """Scrolls down in the file editor. You must open a file first.
 
@@ -191,7 +191,7 @@ def create_tools(vm: RepoVM):
         file_editor.scroll_down()
         return file_editor.display()
 
-    @tool
+    #@tool
     def scroll_up() -> str:
         """Scrolls up in the file editor. You must open a file first.
 
@@ -252,7 +252,7 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
                 )
         else:
             return "Invalid line numbers."
-    @tool
+    #@tool
     def submit() -> str:
         """Submit all the repo changes and close the session. You must use this tool after all the changes are made.
 

@@ -8,6 +8,10 @@ from langchain_openai import ChatOpenAI
 from cura.vm import RepoVM
 from cura.agent_tools import create_tools
 from langchain_core.prompts import ChatPromptTemplate
+from typing import TypedDict, Optional, Union, Literal
+from langchain_core.pydantic_v1 import BaseModel, Field
+from langgraph.graph import StateGraph, START, END
+from langgraph.errors import GraphRecursionError
 dotenv.load_dotenv()
 
 system_prompt = "You are an autonomous programmer, and you are working with several tools to help you solve software engineering problems step by step. "\
@@ -73,3 +77,185 @@ def do_prediction(data):
             submit_patch = None
     
     return submit_patch
+
+
+class AgentState(TypedDict):
+    input_data: dict
+    plan: list[str]
+    current_step: int
+    last_step_result: bool
+    history: list[tuple[str, str]]
+    
+class Plan(BaseModel):
+    steps: list[str] = Field(..., description="different steps to follow, should be in sorted order")
+
+planner_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """You are an autonomous programmer, and you are assigned to propose a pull request to solve a software engineering problem. \
+Here is the objective: {objective}. Finally, you need to provide step that submit the total patch. \
+For the given objective, come up with a simple step by step plan. \
+This plan should involve individual tasks, that if executed correctly will yield the correct answer. Do not add any superfluous steps. \
+The result of the final step should be the final answer. Make sure that each step has all the information needed. Do not put numbered lists before each step.""",
+        ),
+    ]
+)
+
+class ExecuteResult(BaseModel):
+    summary: str = Field(..., description="Summary of the execution")
+    result: bool = Field(..., description="True if the execution was successful, False otherwise")
+
+class ReplanAction(BaseModel):
+    revised_plan: Optional[Plan] = Field(None, description="New plan to replace the current plan. If None, keep the current plan")
+    
+
+step_solver_prompt = ChatPromptTemplate.from_template(
+"""Here is the objective of the plan: {objective}\nHere is the full plan: {plan}\nHere is the result of previous steps execution: {history}\nNow, you are assigned to solve the step: {step}.' \
+Only do the step that you are assigned to do. You have only {recursion_limit} tools calls to solve the step. Do not waste your calls. If you are about to run out of calls, explain why you are not able to solve the step and stop using tools. \
+If you think the step is not solvable, just stop using tools and explain why it is not solvable. The program will handle the rest. \
+"""
+)
+
+step_solving_summary_prompt = ChatPromptTemplate(
+    messages=[
+        ('system', 'In the following plan: {plan}, with the step: {step}, write a brief summary of the execution, and based on the plan, give a boolean result of the execution that indicates whether the step was successful or not. \
+You need to provide accurate information about the execution. All the paths should be absolute paths. \
+You should provide sufficient information that the next step agent does not need to run tools to retrieve the same information. '),
+        ("placeholder", "{messages}"),
+        ('user', 'Now give me your execution summary and result.'),
+    ]
+)
+
+replanner_prompt = ChatPromptTemplate.from_template(
+    """For the given objective, come up with a simple step by step plan. \
+This plan should involve individual tasks, that if executed correctly will yield the correct answer. Do not add any superfluous steps. \
+Make sure that each step has all the information needed - do not skip steps. \
+If the last step is not successful or the step summary is not satisfactory, update the plan, otherwise keep the plan. \
+If the current step is the last step, the program will automatically submit the patch. You don't need to do any step to submit the patch. \
+    
+When you update the plan, the provided plan will replace redundant steps with the new steps. \
+For example, if the plan is ["step1", "step2", "step3"] and we are currently finishing step2, you can provide ['step4', 'step5'] and the new plan will be ["step1", "step2", "step4", "step5"]. The next step will be step4. \
+
+Your objective was this:
+{objective}
+
+Your original plan was this:
+{plan}
+
+You have currently done the following steps: (The last one is the latest step)
+{history}
+
+The last step success was: {last_step_result}.
+
+Now update the plan by providing the next steps, or return None if you want to keep the current plan.
+"""
+)
+
+def do_prediction_plan(data):
+    with RepoVM(image_name='swe_img:latest', repo_name=data['repo'], commit_hash=data['base_commit']) as vm:
+        
+        execution_limit = 20
+        
+        tools = create_tools(vm)
+        planner_llm = ChatOpenAI(model='gpt-4o-mini', temperature=0, top_p=0.95)
+        step_solver_llm = ChatOpenAI(model='gpt-4o-mini', temperature=0, top_p=0.95)
+        
+        replanner_llm = ChatOpenAI(model='gpt-4o-mini', temperature=0, top_p=0.95)
+        
+        planner = planner_prompt | planner_llm.with_structured_output(Plan)
+        step_solver = step_solver_prompt | create_react_agent(step_solver_llm, tools=tools.values())
+        replanner = replanner_prompt | replanner_llm.with_structured_output(ReplanAction)
+        
+        def plan_step(state: AgentState):
+            objective = f"{data['problem_statement']}\n\nHINTS:\n{data['hints_text']}"
+            plan = planner.invoke(
+                input={
+                    "objective": objective
+                }
+            )
+            state['plan'] = plan.steps
+            return state
+        
+        def execute_step(state: AgentState):
+            objective = f"{data['problem_statement']}\n\nHINTS:\n{data['hints_text']}"
+            
+            summarizer = step_solving_summary_prompt | ChatOpenAI(model='gpt-4o-mini', temperature=0, top_p=0.95).with_structured_output(ExecuteResult)
+            try:
+                result_messages = step_solver.invoke(
+                    input={
+                        "objective": objective,
+                        "plan": state['plan'],
+                        "history": state['history'],
+                        "step": state['plan'][state['current_step']],
+                        "recursion_limit": execution_limit
+                    },
+                    config={
+                        "recursion_limit": execution_limit
+                    }
+                )['messages']
+            except GraphRecursionError:
+                result_messages = [("user", "The agent exceeded the recursion limit and was unable to solve the step.")]
+            summary = summarizer.invoke(
+                input={
+                    "plan": state['plan'],
+                    "step": state['plan'][state['current_step']],
+                    "messages": result_messages
+                }
+            )
+            state['history'].append((state['plan'][state['current_step']], summary.summary))
+            state['last_step_result'] = summary.result
+            return state
+        
+        def replan_step(state: AgentState):
+            objective = f"{data['problem_statement']}\n\nHINTS:\n{data['hints_text']}"
+            replan_action: ReplanAction = replanner.invoke(
+                input={
+                    "objective": objective,
+                    "plan": state['plan'],
+                    "history": state['history'],
+                    "last_step_result": state['last_step_result']
+                }
+            )
+            if replan_action.revised_plan is None:
+                plan = state['plan']
+            else:
+                plan = state['plan'][:state['current_step']+1] + replan_action.revised_plan.steps
+            state['plan'] = plan
+            state['current_step'] += 1
+            return state
+            
+            
+        def should_end(state: AgentState) -> Literal["execute_step", "__end__"]:
+            if state['current_step'] >= len(state['plan']):
+                return "__end__"
+            else:
+                return "execute_step"
+        
+        workflow = StateGraph(AgentState)
+        workflow.add_node(plan_step)
+        workflow.add_node(execute_step)
+        workflow.add_node(replan_step)
+        
+        workflow.add_edge(START, "plan_step")
+        workflow.add_edge("plan_step", "execute_step")
+        workflow.add_edge("execute_step", "replan_step")
+        workflow.add_conditional_edges("replan_step", should_end)
+        
+        graph = workflow.compile()
+        
+        init_state: AgentState = {
+            "input_data": data,
+            "plan": [],
+            "current_step": 0,
+            "last_step_result": False,
+            "history": [],
+        }
+        try:
+            graph.invoke(init_state)
+        except GraphRecursionError:
+            pass
+        patch = vm.interface.get_patch_file()
+        return patch
+        
+        
