@@ -7,6 +7,7 @@ import asyncio
 from cura.vm import RepoVM
 from cura.file_editor import FileEditor_with_linting
 from cura.utils import timeout
+import shlex
 
 
 def create_tools(vm: RepoVM):
@@ -14,22 +15,26 @@ def create_tools(vm: RepoVM):
     file_editor: Optional[FileEditor_with_linting] = None
 
     @tool
-    def bash_command(command: str) -> str:
-        """Executes the given bash command.
+    def bash_command(command: str, environment_variables: dict = {}) -> str:
+        """Runs a bash command in the VM. The command will be executed in the root directory of the repository. If the command takes longer than 120 seconds, it will be terminated. This tool is useful for running any command that you would run in a terminal. Each command is stateless.
 
         Args:
-            command (str): The command to execute.
+            command (str): The command to run.
+            environment_variables (dict, optional): Environment variables to set before running the command. Defaults to an empty dictionary.
 
         Returns:
-            str: The result of the command.
+            str: The output of the command.
         """
+        env_vars = ' '.join([f'{shlex.quote(k)}={shlex.quote(v)}' for k, v in environment_variables.items()])
+        safe_command = shlex.quote(command)
+        command_with_env_vars = f"bash -c \"env {env_vars} {safe_command}\""
 
         @timeout(120)
-        def run_command_with_timeout(command):
+        def run_command_with_timeout(command: str) -> str:
             return vm.run_command(command)
 
         try:
-            result = run_command_with_timeout(command)
+            result = run_command_with_timeout(command_with_env_vars)
         except asyncio.TimeoutError:
             return "Command timed out after 120 seconds. Please try a different command."
         if len(result) > 2000:
@@ -113,6 +118,8 @@ def create_tools(vm: RepoVM):
         Returns:
             str: The result of the search.
         """
+        if not vm.interface.file_exists(file_path):
+            return f"File does not exist. Make sure you provide a valid file path or create the file first. Your repository path is at: {vm.repo_path}"
         result = vm.interface.search_file(search_term, file_path)
         output = f"Found {len(result)} matches for {search_term} in {file_path}:\n"
         output += "\n".join([f"Line {k}: {v}" for k, v in result.items()]) + "\n"
@@ -151,6 +158,8 @@ def create_tools(vm: RepoVM):
             str: The content of the file.
         """
         global file_editor
+        if not vm.interface.file_exists(file_path):
+            return f"File does not exist. Make sure you provide a valid file path or create the file first. Your repository path is at: {vm.repo_path}"
         content = vm.interface.get_file_content(file_path)
         file_editor = FileEditor_with_linting(
             file_path=file_path,
