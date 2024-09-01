@@ -122,6 +122,17 @@ class Interface:
         """
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
+    
+    def file_exists(self, file_path: str) -> bool:
+        """Checks if a file exists.
+
+        Args:
+            file_path (str): The path to the file.
+
+        Returns:
+            bool: True if the file exists, False otherwise.
+        """
+        return os.path.exists(file_path)
 
 
 app = Flask(__name__)

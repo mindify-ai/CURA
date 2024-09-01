@@ -102,3 +102,9 @@ def test_display():
     editor.goto_line(100)
     assert '94' in editor.display()
     assert '99' in editor.display()
+    
+    file = dummy_file()
+    file.content = ''
+    editor = FileEditor("test.txt", file.write, file.read(), display_lines=5, scroll_line=5)
+    editor.goto_line(100)
+    assert editor.display() != ''

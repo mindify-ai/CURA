@@ -55,3 +55,12 @@ def test_directory_tree():
         content = "Hello, World!"
         vm.interface.write_file(f"{file_name}", content)
         assert 'test.txt' in vm.interface.directory_tree('/tmp', 3)
+
+def test_file_exists():
+    with VM_with_interface(image_name=image_name) as vm:
+        file_name = "/tmp/test.txt"
+        content = "Hello, World!"
+        vm.interface.write_file(f"{file_name}", content)
+        assert vm.interface.file_exists(file_name) is True
+        assert vm.interface.file_exists("/tmp/missing.txt") is False
+        assert vm.interface.file_exists("/missing.txt") is False

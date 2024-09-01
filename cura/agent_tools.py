@@ -113,6 +113,8 @@ def create_tools(vm: RepoVM):
         Returns:
             str: The result of the search.
         """
+        if not vm.interface.file_exists(file_path):
+            return f"File does not exist. Make sure you provide a valid file path or create the file first. Your repository path is at: {vm.repo_path}"
         result = vm.interface.search_file(search_term, file_path)
         output = f"Found {len(result)} matches for {search_term} in {file_path}:\n"
         output += "\n".join([f"Line {k}: {v}" for k, v in result.items()]) + "\n"
@@ -151,6 +153,8 @@ def create_tools(vm: RepoVM):
             str: The content of the file.
         """
         global file_editor
+        if not vm.interface.file_exists(file_path):
+            return f"File does not exist. Make sure you provide a valid file path or create the file first. Your repository path is at: {vm.repo_path}"
         content = vm.interface.get_file_content(file_path)
         file_editor = FileEditor_with_linting(
             file_path=file_path,

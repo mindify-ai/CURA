@@ -20,7 +20,7 @@ class FileEditor:
         if line_index < 0:
             self._current_line = 0
         elif line_index >= len(self._content_lines):
-            self._current_line = len(self._content_lines) - self._display_lines
+            self._current_line = max(len(self._content_lines) - self._display_lines, 0)
         else:
             self._current_line = line_index
         
