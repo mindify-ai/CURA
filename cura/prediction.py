@@ -255,7 +255,7 @@ def do_prediction_plan(data):
             graph.invoke(init_state)
         except GraphRecursionError:
             pass
-        patch = vm.interface.get_patch_file()
+        patch = vm.interface.get_patch_file(vm.repo_path)
         return patch
         
         
