@@ -26,8 +26,7 @@ def create_tools(vm: RepoVM):
             str: The output of the command.
         """
         env_vars = ' '.join([f'{shlex.quote(k)}={shlex.quote(v)}' for k, v in environment_variables.items()])
-        safe_command = shlex.quote(command)
-        command_with_env_vars = f"bash -c \"env {env_vars} {safe_command}\""
+        command_with_env_vars = f"env {env_vars} bash -c {shlex.quote(command)}"
 
         @timeout(120)
         def run_command_with_timeout(command: str) -> str:
@@ -148,7 +147,7 @@ def create_tools(vm: RepoVM):
 
     @tool
     def open_file(file_path: str, line_number: int = 1) -> str:
-        """Opens the file at the given path in the editor. If line_number is provided, the window will move to include that line. You create a new empty file by providing a path that does not exist.
+        """Opens the file at the given path in the editor. If line_number is provided, the window will move to include that line. You create a new empty file by providing a path that does not exist. You can only have one file open at a time.
 
         Args:
             file_path (str): Path to the file to open.
