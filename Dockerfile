@@ -7,7 +7,7 @@ RUN apt-get update && \
 WORKDIR /
 
 RUN  pip install --upgrade pip && \
-    pip install gitpython flask directory_tree
+    pip install gitpython flask directory_tree pytest
 
 EXPOSE 5001
 

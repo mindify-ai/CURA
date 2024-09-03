@@ -129,7 +129,7 @@ class RepoVM(VM_with_interface):
         url = f"https://github.com/{self.repo_name}.git"
         self.run_command(f"git clone {url}")
         self.run_command(f"bash -c 'cd {self.repo_path} && git checkout {self.commit_hash}'")
-        self.run_command(f"pip install {self.repo_path}")
+        self.run_command(f"pip install -e {self.repo_path}")
         if self.code_base is None:
             self.create_code_base()
         return self

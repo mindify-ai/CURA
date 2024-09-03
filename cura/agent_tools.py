@@ -27,7 +27,10 @@ def create_tools(vm: RepoVM):
         """
         env_vars = ' '.join([f'{shlex.quote(k)}={shlex.quote(v)}' for k, v in environment_variables.items()])
         safe_command = shlex.quote(command)
-        command_with_env_vars = f"bash -c \"env {env_vars} {safe_command}\""
+        if env_vars:
+            command_with_env_vars = f"env {env_vars} bash -c {safe_command}"
+        else:
+            command_with_env_vars = f"bash -c {safe_command}"
 
         @timeout(120)
         def run_command_with_timeout(command: str) -> str:
@@ -69,8 +72,10 @@ def create_tools(vm: RepoVM):
         Returns:
             str: The content of the file.
         """
-        vm.interface.write_file(file_path, content)
-        return "File created successfully."
+        if vm.interface.write_file(file_path, content):
+            return f"File created successfully at {file_path}."
+        else:
+            return f"Failed to create file at {file_path}."
 
     @tool
     def find_file(file_name: str, dir: str = vm.repo_path) -> str:

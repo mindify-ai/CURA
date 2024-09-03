@@ -89,17 +89,17 @@ class AgentState(TypedDict):
 class Plan(BaseModel):
     steps: list[str] = Field(..., description="different steps to follow, should be in sorted order")
 
-planner_prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            """You are an autonomous programmer, and you are assigned to propose a pull request to solve a software engineering problem. \
+planner_prompt = ChatPromptTemplate.from_template(
+"""You are an autonomous programmer, and you are assigned to propose a pull request to solve a software engineering problem. \
 Here is the objective: {objective}. Finally, you need to provide step that submit the total patch. \
 For the given objective, come up with a simple step by step plan. \
 This plan should involve individual tasks, that if executed correctly will yield the correct answer. Do not add any superfluous steps. \
-The result of the final step should be the final answer. Make sure that each step has all the information needed. Do not put numbered lists before each step.""",
-        ),
-    ]
+Make sure that each step has all the information needed. Do not put numbered lists before each step.
+Some Notes: 
+1. The repository has been cloned to the root directory and you are always in the root directory, which is {repo_path}.
+2. The repository has been installed. No need to install the repository again.
+3. Use test-driven to solve the problem. Write tests first and then write the code to pass the tests.
+"""
 )
 
 class ExecuteResult(BaseModel):
@@ -114,14 +114,24 @@ step_solver_prompt = ChatPromptTemplate.from_template(
 """Here is the objective of the plan: {objective}\nHere is the full plan: {plan}\nHere is the result of previous steps execution: {history}\nNow, you are assigned to solve the step: {step}.' \
 Only do the step that you are assigned to do. You have only {recursion_limit} tools calls to solve the step. Do not waste your calls. If you are about to run out of calls, explain why you are not able to solve the step and stop using tools. \
 If you think the step is not solvable, just stop using tools and explain why it is not solvable. The program will handle the rest. \
+Some Notes: \
+1. The repository has been cloned to the root directory and you are always in the root directory, which is {repo_path}. Never check out to another branch or other commit. \
+2. When using tools with paths as arguments, always use absolute paths, never use relative paths. \
+3. Only open one file at a time, when you open another file, the second file will replace the first file. \
+4. pytest is installed. You can use bash_command tool to run pytest. Always use pytest to run specific single test files or several tests. Never use pytest in the whole repository. \
 """
 )
 
 step_solving_summary_prompt = ChatPromptTemplate(
     messages=[
         ('system', 'In the following plan: {plan}, with the step: {step}, write a brief summary of the execution, and based on the plan, give a boolean result of the execution that indicates whether the step was successful or not. \
-You need to provide accurate information about the execution. All the paths should be absolute paths. \
-You should provide sufficient information that the next step agent does not need to run tools to retrieve the same information. '),
+You need to provide accurate information about the execution. \
+You should provide sufficient information that the next step agent does not need to run tools to retrieve the same information. \
+Some Notes: \
+1. If creating files or editing files, provide the absolute path of the file. \
+2. If you are running tests, provide the test results. \
+3. All of the files you mentioned MUST be ABSOLUTE paths. \
+'),
         ("placeholder", "{messages}"),
         ('user', 'Now give me your execution summary and result.'),
     ]
@@ -149,6 +159,11 @@ You have currently done the following steps: (The last one is the latest step)
 The last step success was: {last_step_result}.
 
 Now update the plan by providing the next steps, or return None if you want to keep the current plan.
+Some Notes:
+1. If you want to keep the current plan, just return None.
+2. The repository has been cloned to the root directory and you are always in the root directory, which is {repo_path}.
+3. The repository has been installed. No need to install the repository again.
+4. Use test-driven to solve the problem. Write tests first and then write the code to pass the tests.
 """
 )
 
@@ -171,7 +186,8 @@ def do_prediction_plan(data):
             objective = f"{data['problem_statement']}\n\nHINTS:\n{data['hints_text']}"
             plan = planner.invoke(
                 input={
-                    "objective": objective
+                    "objective": objective,
+                    "repo_path": vm.repo_path
                 }
             )
             state['plan'] = plan.steps
@@ -187,6 +203,7 @@ def do_prediction_plan(data):
                         "objective": objective,
                         "plan": state['plan'],
                         "history": state['history'],
+                        "repo_path": vm.repo_path,
                         "step": state['plan'][state['current_step']],
                         "recursion_limit": execution_limit
                     },
@@ -214,6 +231,7 @@ def do_prediction_plan(data):
                     "objective": objective,
                     "plan": state['plan'],
                     "history": state['history'],
+                    "repo_path": vm.repo_path,
                     "last_step_result": state['last_step_result']
                 }
             )
@@ -252,7 +270,7 @@ def do_prediction_plan(data):
             "history": [],
         }
         try:
-            graph.invoke(init_state)
+            graph.invoke(init_state, config={"recursion_limit": 18})
         except GraphRecursionError:
             pass
         patch = vm.interface.get_patch_file(vm.repo_path)
