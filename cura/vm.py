@@ -126,13 +126,25 @@ class RepoVM(VM_with_interface):
 
     def __enter__(self):
         super().__enter__()
-        url = f"https://github.com/{self.repo_name}.git"
-        self.run_command(f"git clone {url}")
-        self.run_command(f"bash -c 'cd {self.repo_path} && git checkout {self.commit_hash}'")
-        self.run_command(f"pip install -e {self.repo_path}")
+        self._copy_repo(self.repo_name, self.commit_hash)
         if self.code_base is None:
             self.create_code_base()
         return self
+    
+    def _copy_repo(self, repo_name: str, commit_hash: str):
+        clone_url = f"https://github.com/{self.repo_name}.git"
+        repo_path = "/" + repo_name.split("/")[-1]
+        command = "&&".join([
+            f"mkdir {repo_path}",
+            f"cd {repo_path}",
+            "git init",
+            f"git remote add origin {clone_url}",
+            f"git fetch --depth 1 origin {commit_hash}",
+            "git checkout FETCH_HEAD",
+            "cd .."
+        ])
+        self.run_command(f"bash -c '{command}'")
+        
 
     def create_code_base(self):
         code_base_name = "_".join(self.repo_name.split("/") + [self.commit_hash])
