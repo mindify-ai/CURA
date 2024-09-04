@@ -32,7 +32,7 @@ class FileEditor:
         
     def display(self)->str:
         output = "-"*49 + "\n"
-        output += f"File Editor: {self.file_path}\n\n"
+        output += f"File Viewer: {self.file_path}\n\n"
         
         start = self._current_line
         end = min(len(self._content_lines), start + self._display_lines)

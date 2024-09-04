@@ -12,8 +12,6 @@ import shlex
 
 def create_tools(vm: RepoVM):
 
-    file_editor: Optional[FileEditor_with_linting] = None
-
     @tool
     def bash_command(command: str, environment_variables: dict = {}) -> str:
         """Runs a bash command in the VM. The command will be executed in the root directory of the repository. If the command takes longer than 120 seconds, it will be terminated. This tool is useful for running any command that you would run in a terminal. Each command is stateless.
@@ -57,6 +55,8 @@ def create_tools(vm: RepoVM):
         """
 
         result = vm.interface.directory_tree(dir_path, max_depth)
+        if result is None:
+            return f"Directory {dir_path} does not exist"
         if len(result) > 2000:
             return "The directory tree is too large to display. Please specify a smaller max_depth."
         return result
@@ -152,31 +152,29 @@ def create_tools(vm: RepoVM):
         return output
 
     @tool
-    def open_file(file_path: str, line_number: int = 1) -> str:
-        """Opens the file at the given path in the editor. If line_number is provided, the window will move to include that line. You create a new empty file by providing a path that does not exist.
+    def view_file(file_path: str, line_number: int = 1) -> str:
+        """Views the content of a file. If the file does not exist, an error message will be returned. The file will be displayed with line numbers.
 
         Args:
-            file_path (str): Path to the file to open.
+            file_path (str): Path to the file to view.
             line_number (int, optional): Line number to move to. Defaults to 1.
 
         Returns:
             str: The content of the file.
         """
-        global file_editor
         if not vm.interface.file_exists(file_path):
             return f"File does not exist. Make sure you provide a valid file path or create the file first. Your repository path is at: {vm.repo_path}"
-        content = vm.interface.get_file_content(file_path)
         file_editor = FileEditor_with_linting(
             file_path=file_path,
             write_file_fn=lambda content: vm.interface.write_file(file_path, content),
-            file_content=content,
+            file_content=vm.interface.get_file_content(file_path),
             display_lines=100,
             scroll_line=100,
         )
         file_editor.goto_line(line_number)
         return file_editor.display()
     
-    @tool
+    #@tool
     def goto_line(line_number: int) -> str:
         """Moves the window to the given line in the editor. You must open a file first.
 
@@ -219,10 +217,11 @@ def create_tools(vm: RepoVM):
         return file_editor.display()
 
     @tool
-    def edit(begin_line: int, end_line: int, new_content: str) -> str:
+    def edit(file_path: str, begin_line: int, end_line: int, new_content: str) -> str:
         """Replaces lines n through m (inclusive) with the given text in the open file. All of the new_content will be entered, so make sure your indentation is formatted properly. Python files will be checked for syntax errors after the edit. If an error is found, the edit will not be executed. Reading the error message and modifying your command is recommended as issuing the same command will return the same error.
 
         Args:
+            file_path (str): The path to the file to edit.
             begin_line (int): The line number to begin editing.
             end_line (int): The line number to end editing.
             new_content (str): The new content to replace the lines with.
@@ -230,9 +229,13 @@ def create_tools(vm: RepoVM):
         Returns:
             str: The new content of the editor after editing.
         """
-        global file_editor
-        if file_editor is None:
-            return "No file is currently open, please open a file first."
+        if not vm.interface.file_exists(file_path):
+            return f"File does not exist. Make sure you provide a valid file path or create the file first. Your repository path is at: {vm.repo_path}"
+        file_editor = FileEditor_with_linting(
+            file_path=file_path, 
+            write_file_fn=lambda content: vm.interface.write_file(file_path, content),
+            file_content=vm.interface.get_file_content(file_path),
+        )
         if file_editor.edit(begin_line, end_line, new_content):
             if file_editor.file_path.endswith(".py"):
                 lint_errors_by_line = file_editor.lint()

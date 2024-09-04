@@ -99,6 +99,7 @@ Some Notes:
 1. The repository has been cloned to the root directory and you are always in the root directory, which is {repo_path}.
 2. The repository has been installed. No need to install the repository again.
 3. Use test-driven to solve the problem. Write tests first and then write the code to pass the tests.
+4. Never create new branches or switch to other branches. Never check out to other commits. Always edit the files in the current commit. \
 """
 )
 
@@ -115,11 +116,10 @@ step_solver_prompt = ChatPromptTemplate.from_template(
 Only do the step that you are assigned to do. You have only {recursion_limit} tools calls to solve the step. Do not waste your calls. If you are about to run out of calls, explain why you are not able to solve the step and stop using tools. \
 If you think the step is not solvable, just stop using tools and explain why it is not solvable. The program will handle the rest. \
 Some Notes: \
-1. The repository has been cloned to the root directory and you are always in the root directory, which is {repo_path}. Never check out to another branch or other commit. \
+1. The repository has been cloned to the root directory and you are always in the root directory, which is {repo_path}. \
 2. When using tools with paths as arguments, always use absolute paths, never use relative paths. \
-3. Only open one file at a time, when you open another file, the second file will replace the first file. \
-4. pytest is installed. You can use bash_command tool to run pytest. Always use pytest to run specific single test files or several tests. Never use pytest in the whole repository. \
-5. Never create new branches or switch to other branches. Never check out to other commits. Always edit the files in the current commit. \
+3. pytest is installed. You can use bash_command tool to run pytest. Always use pytest to run specific single test files or several tests. Never use pytest in the whole repository. \
+4. Use multiple tools to save calls. \
 """
 )
 
@@ -132,6 +132,7 @@ Some Notes: \
 1. If creating files or editing files, provide the absolute path of the file. \
 2. If you are running tests, provide the test results. \
 3. All of the files you mentioned MUST be ABSOLUTE paths. \
+4. It step solver agent need more steps to process the request, you should summarize that the agent was not successful. \
 '),
         ("placeholder", "{messages}"),
         ('user', 'Now give me your execution summary and result.'),
@@ -167,6 +168,8 @@ Some Notes:
 4. Use test-driven to solve the problem. Write tests first and then write the code to pass the tests.
 5. pytest is installed. You can use bash_command tool to run pytest. Always use pytest to run specific single test files or several tests. Never use pytest in the whole repository. \
 6. Never create new branches or switch to other branches. Never check out to other commits. Always edit the files in the current commit. \
+7. Never create new branches or switch to other branches. Never check out to other commits. Always edit the files in the current commit. \
+8. If meeting package version conflicts or missing packages, use pip to downgrade or install the package. \
 """
 )
 
