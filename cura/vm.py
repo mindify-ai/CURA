@@ -129,13 +129,16 @@ class RepoVM(VM_with_interface):
         url = f"https://github.com/{self.repo_name}.git"
         self.run_command(f"git clone {url}")
         self.run_command(f"bash -c 'cd {self.repo_path} && git checkout {self.commit_hash}'")
-        self.run_command(f"pip install {self.repo_path}")
+        self.run_command(f"pip install -e {self.repo_path}")
         if self.code_base is None:
             self.create_code_base()
         return self
 
     def create_code_base(self):
         code_base_name = "_".join(self.repo_name.split("/") + [self.commit_hash])
+        code_base_name = code_base_name.replace(".", "_").replace("-", "_").replace("/", "_").replace(":", "_").replace(" ", "_")
+        if len(code_base_name) > 63:
+            code_base_name = code_base_name[:63]
         self.code_base = CodeBase(code_base_name, self.interface.get_file_content)
         if self.code_base.empty:
             print("Code base is empty, creating new code base.")

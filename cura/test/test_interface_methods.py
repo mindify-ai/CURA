@@ -10,6 +10,11 @@ def test_write_file():
         vm.interface.write_file(file_path, content)
         assert vm.run_command(f"cat {file_path}") == content
         
+        file_path = "/test/test/test.txt"
+        content = "Hello, World!"
+        vm.interface.write_file(file_path, content)
+        assert vm.run_command(f"cat {file_path}") == content
+        
 def test_get_file_content():
     with VM_with_interface(image_name=image_name) as vm:
         file_path = "/test.txt"

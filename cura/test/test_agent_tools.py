@@ -31,3 +31,49 @@ def test_bash_command():
             }
         )
         assert "pip" in result
+        
+        result = bash_tool.invoke(
+            {
+                "command": "git --version"
+            }
+        )
+        assert "git" in result
+        
+        result = bash_tool.invoke(
+            {
+                "command": "pytest --version"
+            }
+        )
+        assert "pytest" in result
+
+def test_create_file():
+    with RepoVM(image_name=image_name, repo_name=test_repo, commit_hash=test_commit_hash) as vm:
+        tools = create_tools(vm)
+        create_file_tool = tools['create_file']
+        directory_tree_tool = tools['directory_tree']
+        
+        create_file_tool.invoke(
+            {
+                "file_path": "/test.txt",
+                "content": "Hello, World!"
+            }
+        )
+        
+        result = vm.run_command("cat /test.txt")
+        assert result == "Hello, World!"
+        assert vm.interface.file_exists("/test.txt")
+        assert vm.interface.get_file_content("/test.txt") == "Hello, World!"
+        assert "test.txt" in directory_tree_tool.invoke({"dir_path": "/"})
+        
+        create_file_tool.invoke(
+            {
+                "file_path": "/test.txt",
+                "content": "Goodbye, World!"
+            }
+        )
+        
+        result = vm.run_command("cat /test.txt")
+        assert result == "Goodbye, World!"
+        assert vm.interface.file_exists("/test.txt")
+        assert vm.interface.get_file_content("/test.txt") == "Goodbye, World!"
+        assert "test.txt" in directory_tree_tool.invoke({"dir_path": "/"})
