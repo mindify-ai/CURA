@@ -17,7 +17,7 @@ import os
 class CodeBase:
     def __init__(self, name: str, get_file_content: callable, storage_root: str = "storage"):
         self._get_file_content: callable[[str], str] = get_file_content
-        embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2", encode_kwargs={'clean_up_tokenization_spaces': True})
+        embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
         
         self.storage_root = storage_root
         self.chroma_path = os.path.join(self.storage_root, name, "chroma")
