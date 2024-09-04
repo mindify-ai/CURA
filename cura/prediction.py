@@ -119,6 +119,7 @@ Some Notes: \
 2. When using tools with paths as arguments, always use absolute paths, never use relative paths. \
 3. Only open one file at a time, when you open another file, the second file will replace the first file. \
 4. pytest is installed. You can use bash_command tool to run pytest. Always use pytest to run specific single test files or several tests. Never use pytest in the whole repository. \
+5. Never create new branches or switch to other branches. Never check out to other commits. Always edit the files in the current commit. \
 """
 )
 
@@ -164,6 +165,8 @@ Some Notes:
 2. The repository has been cloned to the root directory and you are always in the root directory, which is {repo_path}.
 3. The repository has been installed. No need to install the repository again.
 4. Use test-driven to solve the problem. Write tests first and then write the code to pass the tests.
+5. pytest is installed. You can use bash_command tool to run pytest. Always use pytest to run specific single test files or several tests. Never use pytest in the whole repository. \
+6. Never create new branches or switch to other branches. Never check out to other commits. Always edit the files in the current commit. \
 """
 )
 
@@ -270,7 +273,7 @@ def do_prediction_plan(data):
             "history": [],
         }
         try:
-            graph.invoke(init_state, config={"recursion_limit": 18})
+            graph.invoke(init_state, config={"recursion_limit": 20})
         except GraphRecursionError:
             pass
         patch = vm.interface.get_patch_file(vm.repo_path)

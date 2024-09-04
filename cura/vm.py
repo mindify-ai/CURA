@@ -136,6 +136,9 @@ class RepoVM(VM_with_interface):
 
     def create_code_base(self):
         code_base_name = "_".join(self.repo_name.split("/") + [self.commit_hash])
+        code_base_name = code_base_name.replace(".", "_").replace("-", "_").replace("/", "_").replace(":", "_").replace(" ", "_")
+        if len(code_base_name) > 63:
+            code_base_name = code_base_name[:63]
         self.code_base = CodeBase(code_base_name, self.interface.get_file_content)
         if self.code_base.empty:
             print("Code base is empty, creating new code base.")
