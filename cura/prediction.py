@@ -12,6 +12,7 @@ from typing import TypedDict, Optional, Union, Literal
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langgraph.graph import StateGraph, START, END
 from langgraph.errors import GraphRecursionError
+import logging
 dotenv.load_dotenv()
 
 system_prompt = "You are an autonomous programmer, and you are working with several tools to help you solve software engineering problems step by step. "\
@@ -173,9 +174,10 @@ Some Notes:
 """
 )
 
-def do_prediction_plan(data):
-    with SWEVM(data=data, create_code_base=False) as vm:
-        
+def do_prediction_plan(data, logger: Optional[logging.Logger] = None):
+    logger = logger if logger is not None else logging.getLogger(do_prediction_plan.__name__)
+    with SWEVM(data=data, create_code_base=False, logger=logger.getChild("vm")) as vm:
+        logger.info(f"Starting do prediction for {data['instance_id']}.")
         execution_limit = 20
         
         tools = create_tools(vm)
@@ -189,6 +191,7 @@ def do_prediction_plan(data):
         replanner = replanner_prompt | replanner_llm.with_structured_output(ReplanAction)
         
         def plan_step(state: AgentState):
+            logger.info(f"Planning step for {data['instance_id']}.")
             objective = data['problem_statement']
             plan = planner.invoke(
                 input={
@@ -200,6 +203,7 @@ def do_prediction_plan(data):
             return state
         
         def execute_step(state: AgentState):
+            logger.info(f"Executing step for {data['instance_id']} in step {state['current_step']}.")
             objective = data['problem_statement']
             
             summarizer = step_solving_summary_prompt | ChatOpenAI(model='gpt-4o-mini', temperature=0, top_p=0.95).with_structured_output(ExecuteResult)
@@ -228,9 +232,12 @@ def do_prediction_plan(data):
             )
             state['history'].append((state['plan'][state['current_step']], summary.summary))
             state['last_step_result'] = summary.result
+            logger.info(f"Executed step result: {summary.result} for {data['instance_id']} in step {state['current_step']}.")
+            logger.debug(f"Executed step summary: {summary.summary}")
             return state
         
         def replan_step(state: AgentState):
+            logger.info(f"Replanning step for {data['instance_id']}.")
             objective = f"{data['problem_statement']}\n\nHINTS:\n{data['hints_text']}"
             replan_action: ReplanAction = replanner.invoke(
                 input={
@@ -243,8 +250,11 @@ def do_prediction_plan(data):
             )
             if replan_action.revised_plan is None:
                 plan = state['plan']
+                logger.info(f"No plan was updated for {data['instance_id']}.")
             else:
                 plan = state['plan'][:state['current_step']+1] + replan_action.revised_plan.steps
+                logger.info(f"Plan was updated for {data['instance_id']}.")
+                logger.debug(f"New plan: {plan}")
             state['plan'] = plan
             state['current_step'] += 1
             return state
@@ -276,9 +286,10 @@ def do_prediction_plan(data):
             "history": [],
         }
         try:
+            logger.info("Start graph execution.")
             graph.invoke(init_state, config={"recursion_limit": 20})
         except GraphRecursionError:
-            pass
+            logger.info("Graph reached recursion limit.")
         patch = vm.interface.get_patch_file(vm.repo_path)
         return patch
         
