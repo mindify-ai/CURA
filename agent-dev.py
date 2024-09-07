@@ -1,7 +1,10 @@
 import logging
+import time
+from pathlib import Path
 
+Path("logs/agent-dev").mkdir(parents=True, exist_ok=True)
 logging.basicConfig(
-    filename='logs/agent-dev.log',
+    filename=Path("logs") / "agent-dev" / f"execution-{time.strftime('%Y-%m-%d-%H-%M-%S')}.log",
     level=logging.DEBUG,
     filemode='w',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -20,14 +23,15 @@ dotenv.load_dotenv()
 
 
 def main():
+    logger = logging.getLogger("agent-dev")
     swebench = load_dataset('princeton-nlp/SWE-bench_Verified', split='test')
     if platform.machine() == 'arm64':
         swebench = swebench.filter(lambda x: x['instance_id'] not in USE_X86)
 
     data = swebench.shuffle(seed=40).select(range(1))[0]
-
-    patch = do_prediction_plan(data)
-    logging.info(f"Patch: {patch}")
+    logger.info(f"Data: {data}")
+    patch = do_prediction_plan(data, logger=logger)
+    logger.info(f"Patch: {patch}")
     predictions = {
         data['instance_id']: {
             'model_patch': patch,
@@ -45,7 +49,7 @@ def main():
         max_workers=1,
         timeout=180,
     )
-    
+    logger.info(f"Done")
 
 if __name__ == '__main__':
     main()
