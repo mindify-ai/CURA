@@ -1,6 +1,15 @@
 from cura.vm import VM_with_interface, SWEVM
 from cura.test.utils import IMAGE_NAME, TEST_DATA
+import pytest
 
+
+def test_raise_exception():
+    with VM_with_interface(image_name=IMAGE_NAME) as vm:
+        with pytest.raises(Exception):
+            vm.interface.get_file_content("/missing.txt")
+        vm.interface.write_file("/test.txt", "Hello, World!")
+        assert vm.run_command("cat /test.txt") == "Hello, World!"
+        
 def test_write_file():
     with VM_with_interface(image_name=IMAGE_NAME) as vm:
         file_path = "/test.txt"

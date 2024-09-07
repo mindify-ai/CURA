@@ -131,12 +131,16 @@ class VM_with_interface(VirtualMachine):
 
     def method_decorator(self, method):
         def wrapper(*args):
+            self.logger.info(f"Calling method {method.__name__} with args {args}.")
             url = f"http://localhost:{self.host_open_port}/{method.__name__}"
             response = requests.post(url, json=list(args))
             if response.status_code == 200:
+                self.logger.debug(f"Method {method.__name__} returned {response.json()}.")
                 return response.json()
             else:
-                raise Exception(response.text)
+                error_dict = response.json()
+                raise Exception(error_dict["error"], error_dict["traceback"])
+                
 
         return wrapper
 

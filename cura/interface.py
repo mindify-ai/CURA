@@ -155,8 +155,8 @@ def execute_command(command):
         result = func(*args)
         return jsonify(result)
     except Exception as e:
-        error_message = f"{str(e)}\n{traceback.format_exc()}"
-        return Response(error_message, status=400)
+        error_message = {"error": str(e), "traceback": traceback.format_exc()}
+        return jsonify(error_message), 400
 
 
 if __name__ == "__main__":
