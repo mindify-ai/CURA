@@ -4,40 +4,37 @@ sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 from langchain_core.tools import tool, BaseTool
 from typing import Optional
 import asyncio
-from cura.vm import RepoVM
+from cura.vm import SWEVM
 from cura.file_editor import FileEditor_with_linting
 from cura.utils import timeout
 import shlex
 
 
-def create_tools(vm: RepoVM):
+def create_tools(vm: SWEVM):
 
     @tool
-    def bash_command(command: str, environment_variables: dict = {}) -> str:
+    def bash_command(command: str) -> str:
         """Runs a bash command in the VM. The command will be executed in the root directory of the repository. If the command takes longer than 120 seconds, it will be terminated. This tool is useful for running any command that you would run in a terminal. Each command is stateless.
 
         Args:
             command (str): The command to run.
-            environment_variables (dict, optional): Environment variables to set before running the command. Defaults to an empty dictionary.
 
         Returns:
             str: The output of the command.
         """
-        env_vars = ' '.join([f'{shlex.quote(k)}={shlex.quote(v)}' for k, v in environment_variables.items()])
-        safe_command = shlex.quote(command)
-        if env_vars:
-            command_with_env_vars = f"env {env_vars} bash -c {safe_command}"
-        else:
-            command_with_env_vars = f"bash -c {safe_command}"
+        #env_vars = ' '.join([f'{k}={shlex.quote(v)}' for k, v in environment_variables.items()])
+        #safe_command = f"{env_vars} {command}"
 
         @timeout(120)
         def run_command_with_timeout(command: str) -> str:
-            return vm.run_command(command)
+            return vm.conda_run_command(command)
 
         try:
-            result = run_command_with_timeout(command_with_env_vars)
+            result = run_command_with_timeout(command)
         except asyncio.TimeoutError:
             return "Command timed out after 120 seconds. Please try a different command."
+        except Exception as e:
+            result = str(e)
         if len(result) > 2000:
             return result[:2000] + "\nOutput truncated. Please narrow your command."
         return result
@@ -133,7 +130,7 @@ def create_tools(vm: RepoVM):
             output += "Exceeded 50 matches. Please narrow your search term."
         return output
     
-    @tool
+    #@tool
     def search_file_fuzzy(query: str) -> str:
         """Searches for file paths that match the given fuzzy query. The input query will be transformed into an embedding and compared to the repository's file content embeddings. The closest matches will be returned.
 

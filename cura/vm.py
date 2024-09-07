@@ -7,8 +7,14 @@ import requests
 import time
 import socket
 import threading
+import platform
+import shlex
+import logging
 from cura.code_base import CodeBase
 from typing import Optional
+from swebench.harness.constants import MAP_REPO_VERSION_TO_SPECS, USE_X86
+from swebench.harness.utils import get_environment_yml, get_requirements
+from typing import TypedDict
 
 class VirtualMachine:
     """
@@ -19,6 +25,8 @@ class VirtualMachine:
         self._image_name = image_name
         self._client = docker.from_env()
         self._container_run_params = {}
+        self.logger = logging.getLogger("VirtualMachine")
+        
     file_lock = threading.Lock()
 
     def __enter__(self):
@@ -31,8 +39,18 @@ class VirtualMachine:
         self._container.remove(force=True)
 
     def run_command(self, command: str) -> str:
-        result = self._container.exec_run(command).output.decode("utf-8")
-        return result
+        result = self._container.exec_run(command)
+        self.logger.debug(f"Command: {command} returned: {result.output.decode('utf-8')}")
+        if result.exit_code != 0:
+            raise Exception(f"Error running command: {command}\n{result.output.decode('utf-8')}")
+        return result.output.decode("utf-8")
+    
+    def bash_command(self, command: str, working_dir: str = '/') -> str:
+        if working_dir != '/':
+            command = f"cd {working_dir} && {command}"
+        safe_command = shlex.quote(command)
+        full_command = f"bash -c {safe_command}"
+        return self.run_command(full_command)
 
     def run_command_async(self, command: str):
         self._container.exec_run(command, detach=True)
@@ -94,7 +112,7 @@ class VM_with_interface(VirtualMachine):
             super().__enter__()
             time.sleep(0.1)
         self.copy_file_to_vm(self.host_interface_path, self.container_interface_path)
-        self.run_command_async(f"python {self.container_interface_path}")
+        self.run_command_async(f"bash -c 'python {self.container_interface_path}'")
         time.sleep(0.3)
         return self
 
@@ -105,7 +123,7 @@ class VM_with_interface(VirtualMachine):
             if response.status_code == 200:
                 return response.json()
             else:
-                return response.text
+                raise Exception(response.text)
 
         return wrapper
 
@@ -115,28 +133,45 @@ class VM_with_interface(VirtualMachine):
             if callable(attr) and not attr_name.startswith("__"):
                 setattr(interface, attr_name, self.method_decorator(attr))
 
+class SWEInput(TypedDict):
+    repo: str
+    instance_id: str
+    base_commit: str
+    patch: str
+    test_patch: str
+    problem_statement: str
+    hints_text: str
+    created_at: str
+    version: str
+    FAIL_TO_PASS: list
+    PASS_TO_PASS: list
+    environment_setup_commit: str
 
-class RepoVM(VM_with_interface):
-    def __init__(self, image_name: str, repo_name: str, commit_hash: str, code_base: Optional[CodeBase] = None):
-        super().__init__(image_name)
-        self.repo_name = repo_name
-        self.commit_hash = commit_hash
-        self.repo_path = "/" + self.repo_name.split("/")[-1]
+class SWEVM(VM_with_interface):
+    def __init__(self, data: SWEInput, code_base: Optional[CodeBase] = None, create_code_base: bool = True):
+        self.data = data
+        super().__init__(self._get_image_name())
+        self.repo_path = "/" + self.data["repo"].split("/")[-1]
         self.code_base = code_base
+        self._create_code_base = create_code_base
+    
+    @property
+    def _repo_name(self):
+        return self.data["repo"].replace("/", "_").replace(" ", "-").replace("'", "")
 
     def __enter__(self):
         super().__enter__()
-        self._copy_repo(self.repo_name, self.commit_hash)
-        if self.code_base is None:
+        self._copy_repo(self.data["repo"], self.data["base_commit"])
+        self._install_env()
+        if self.code_base is None and self._create_code_base:
             self.create_code_base()
         return self
     
     def _copy_repo(self, repo_name: str, commit_hash: str):
-        clone_url = f"https://github.com/{self.repo_name}.git"
-        repo_path = "/" + repo_name.split("/")[-1]
+        clone_url = f"https://github.com/{repo_name}.git"
         command = "&&".join([
-            f"mkdir {repo_path}",
-            f"cd {repo_path}",
+            f"mkdir {self.repo_path}",
+            f"cd {self.repo_path}",
             "git init",
             f"git remote add origin {clone_url}",
             f"git fetch --depth 1 origin {commit_hash}",
@@ -144,10 +179,79 @@ class RepoVM(VM_with_interface):
             "cd .."
         ])
         self.run_command(f"bash -c '{command}'")
+    def _get_image_name(self):
         
+        if platform.machine() in {"aarch64", "arm64"}:
+            arch = "arm64" if self.data["instance_id"] not in USE_X86 else "x86_64"
+        else:
+            arch = "x86_64"
+            
+        image_name = f"swe:{arch}"
+        client = docker.from_env()
+        if image_name not in [tag for image in client.images.list() for tag in image.tags]:
+            client.images.build(
+                path=".",
+                dockerfile="docker/swe.Dockerfile",
+                buildargs={"TARGETARCH": arch},
+                tag=image_name
+            )
+        return image_name
+            
+        
+    def _install_env(self):
+        install_configs = MAP_REPO_VERSION_TO_SPECS[self.data["repo"]][self.data["version"]]
+        
+        self.env_name = f"{self._repo_name}__{self.data['version']}"
+        packages = install_configs.get("packages", "")
+        if packages == "requirements.txt":
+            self.run_command(f"conda create -n {self.env_name} python={install_configs['python']} -y")
+            content_reqs = get_requirements(self.data)
+            PATH_TO_REQS = "/root/requirements.txt"
+            self.interface.write_file(PATH_TO_REQS, content_reqs)
+            self.conda_run_command(f"pip install -r {PATH_TO_REQS}")
+            self.run_command(f"rm {PATH_TO_REQS}")
+        elif packages == "environment.yml":
+            self.run_command(f"conda create -c conda-forge -n {self.env_name} python={install_configs['python']} -y",)
+            content_env_yml = get_environment_yml(self.data, self.env_name)
+            if not install_configs.get("no_use_env"):
+                content_env_yml += f'\n  - python={install_configs["python"]}\n'
+            PATH_TO_ENV_YML = "/root/environment.yml"
+            self.interface.write_file(PATH_TO_ENV_YML, content_env_yml)
+            if install_configs.get("no_use_env"):
+                self.run_command(f"conda create -c conda-forge -n {self.env_name} python={install_configs['python']} -y")
+                self.run_command(f"conda env update -f {PATH_TO_ENV_YML}")
+            else:
+                self.run_command(f"conda env create --file {PATH_TO_ENV_YML}")
+        else:
+            python_env = f"python{install_configs['python']}"
+            if self._conda_environment_exists(python_env):
+                self.run_command(f"conda create --name {self.env_name} --clone {python_env}")
+            else:
+                self.run_command(f"conda create -n {self.env_name} python={install_configs['python']} -y")
+        
+            if packages.strip():
+                self.run_command(f"conda install {packages} -y")
+        
+        # Install extra pip packages if specified
+        if install_configs.get("pip_packages"):
+            self.conda_run_command(f"pip install {' '.join(install_configs['pip_packages'])}")
+        
+        if install_configs.get("pre_install"):
+            for pre_install_cmd in install_configs["pre_install"]:
+                self.conda_run_command(pre_install_cmd, self.repo_path)
+        if install_configs.get("install"):
+            self.conda_run_command(install_configs["install"], self.repo_path)
+        if install_configs.get("post_install"):
+            for post_install_cmd in install_configs["post_install"]:
+                self.conda_run_command(post_install_cmd, self.repo_path)
+        
+        self.conda_run_command("pip install pytest")
+
+    def conda_run_command(self, command: str, working_dir: str = "/") -> str:
+        return self.bash_command(f"source activate {self.env_name} && {command}", working_dir)
 
     def create_code_base(self):
-        code_base_name = "_".join(self.repo_name.split("/") + [self.commit_hash])
+        code_base_name = f"{self._repo_name}_{self.data['base_commit']}"
         code_base_name = code_base_name.replace(".", "_").replace("-", "_").replace("/", "_").replace(":", "_").replace(" ", "_")
         if len(code_base_name) > 63:
             code_base_name = code_base_name[:63]
@@ -156,3 +260,10 @@ class RepoVM(VM_with_interface):
             print("Code base is empty, creating new code base.")
             python_files = self.interface.find_file(".py", self.repo_path)
             self.code_base.add_files(python_files)
+    
+    def _conda_environment_exists(self, env_name: str) -> bool:
+        try:
+            self.bash_command(f"conda env list | grep {env_name}")
+        except Exception:
+            return False
+        return True

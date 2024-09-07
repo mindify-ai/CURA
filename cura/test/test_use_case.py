@@ -1,12 +1,9 @@
-from cura.vm import RepoVM
+from cura.vm import SWEVM
 from cura.agent_tools import create_tools
-
-test_repo = "sqlfluff/sqlfluff"
-test_commit_hash = "c7e791d5ff3bf681a1eb2d717a69c8e166029c42"
-image_name = "swe_img:latest"
+from cura.test.utils import TEST_DATA
 
 def test_add_pytest():
-    with RepoVM(image_name=image_name, repo_name=test_repo, commit_hash=test_commit_hash) as vm:
+    with SWEVM(data=TEST_DATA) as vm:
         tools = create_tools(vm)
         create_file_tool = tools['create_file']
         directory_tree_tool = tools['directory_tree']

@@ -5,7 +5,7 @@ sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 from langgraph.prebuilt import create_react_agent
 from langchain_openai import ChatOpenAI
-from cura.vm import RepoVM
+from cura.vm import SWEVM
 from cura.agent_tools import create_tools
 from langchain_core.prompts import ChatPromptTemplate
 from typing import TypedDict, Optional, Union, Literal
@@ -54,7 +54,7 @@ prompt_template = ChatPromptTemplate(
 )
 
 def do_prediction(data):
-    with RepoVM(image_name='swe_img:latest', repo_name=data['repo'], commit_hash=data['base_commit']) as vm:
+    with SWEVM(data=data) as vm:
         
         llm = ChatOpenAI(model='gpt-4o-mini', temperature=0, top_p=0.95)
         tools = create_tools(vm)
@@ -98,7 +98,7 @@ Make sure that each step has all the information needed. Do not put numbered lis
 Some Notes: 
 1. The repository has been cloned to the root directory and you are always in the root directory, which is {repo_path}.
 2. The repository has been installed. No need to install the repository again.
-3. Use test-driven to solve the problem. Write tests first and then write the code to pass the tests.
+3. Use test-driven to solve the problem. Create new test files to write tests and then write the code to pass the tests, do not modify the existing test files.
 4. Never create new branches or switch to other branches. Never check out to other commits. Always edit the files in the current commit. \
 """
 )
@@ -118,7 +118,7 @@ If you think the step is not solvable, just stop using tools and explain why it 
 Some Notes: \
 1. The repository has been cloned to the root directory and you are always in the root directory, which is {repo_path}. \
 2. When using tools with paths as arguments, always use absolute paths, never use relative paths. \
-3. pytest is installed. You can use bash_command tool to run pytest. Always use pytest to run specific single test files or several tests. Never use pytest in the whole repository. \
+3. pytest is installed. You can use bash_command tool to run pytest by "python -m pytest ..." instead "pytest ...". Always use pytest to run specific single test files or several tests. Never use pytest in the whole repository. \
 4. Use multiple tools to save calls. \
 """
 )
@@ -165,7 +165,7 @@ Some Notes:
 1. If you want to keep the current plan, just return None.
 2. The repository has been cloned to the root directory and you are always in the root directory, which is {repo_path}.
 3. The repository has been installed. No need to install the repository again.
-4. Use test-driven to solve the problem. Write tests first and then write the code to pass the tests.
+4. Use test-driven to solve the problem. Create new test files to write tests and then write the code to pass the tests, do not modify the existing test files.
 5. pytest is installed. You can use bash_command tool to run pytest. Always use pytest to run specific single test files or several tests. Never use pytest in the whole repository. \
 6. Never create new branches or switch to other branches. Never check out to other commits. Always edit the files in the current commit. \
 7. Never create new branches or switch to other branches. Never check out to other commits. Always edit the files in the current commit. \
@@ -174,7 +174,7 @@ Some Notes:
 )
 
 def do_prediction_plan(data):
-    with RepoVM(image_name='swe_img:latest', repo_name=data['repo'], commit_hash=data['base_commit']) as vm:
+    with SWEVM(data=data, create_code_base=False) as vm:
         
         execution_limit = 20
         
@@ -189,7 +189,7 @@ def do_prediction_plan(data):
         replanner = replanner_prompt | replanner_llm.with_structured_output(ReplanAction)
         
         def plan_step(state: AgentState):
-            objective = f"{data['problem_statement']}\n\nHINTS:\n{data['hints_text']}"
+            objective = data['problem_statement']
             plan = planner.invoke(
                 input={
                     "objective": objective,
@@ -200,7 +200,7 @@ def do_prediction_plan(data):
             return state
         
         def execute_step(state: AgentState):
-            objective = f"{data['problem_statement']}\n\nHINTS:\n{data['hints_text']}"
+            objective = data['problem_statement']
             
             summarizer = step_solving_summary_prompt | ChatOpenAI(model='gpt-4o-mini', temperature=0, top_p=0.95).with_structured_output(ExecuteResult)
             try:

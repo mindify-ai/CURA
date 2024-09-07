@@ -41,7 +41,7 @@ class CodeBase:
         )
     
     def add_files(self, files: set[str]):
-        file_contents = { file: self._get_file_content(file) for file in files }
+        file_contents = { file: self._get_file_content(file) for file in files if self._get_file_content(file) != "" }
         extension_to_splitter = {
             ".py": RecursiveCharacterTextSplitter(separators=["\nclass ", "\ndef ", "\n\tdef "]),
             ".md": RecursiveCharacterTextSplitter.from_language(
