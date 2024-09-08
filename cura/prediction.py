@@ -101,6 +101,15 @@ Some Notes:
 2. The repository has been installed. No need to install the repository again.
 3. Use test-driven to solve the problem. Create new test files to write tests and then write the code to pass the tests, do not modify the existing test files.
 4. Never create new branches or switch to other branches. Never check out to other commits. Always edit the files in the current commit. \
+
+Example:
+Objective: Implement a new feature to validate email addresses during user registration.
+["Create a new test file named test_email_validation.py in the directory {repo_path}/tests/user/. In this file, write multiple test cases to check the behavior of the email validation feature, including cases for valid email formats, invalid email formats, and edge cases like empty or missing email fields.", \
+    "Run the test file test_email_validation.py to verify that the current implementation does not pass the tests. Since the email validation feature has not been implemented yet, the tests should fail.", \
+    "Identify the related files where the email validation logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the email validation logic needs to be added or modified.", \
+    "Implement the email validation logic in the identified files. This includes writing the necessary code to check the format of the email address using appropriate validation rules.", \
+    "Run the test file test_email_validation.py again to verify that the tests now pass, indicating that the email validation feature has been correctly implemented.", \
+    "End the plan here."]
 """
 )
 
@@ -118,9 +127,15 @@ Only do the step that you are assigned to do. You have only {recursion_limit} to
 If you think the step is not solvable, just stop using tools and explain why it is not solvable. The program will handle the rest. \
 Some Notes: \
 1. The repository has been cloned to the root directory and you are always in the root directory, which is {repo_path}. \
-2. When using tools with paths as arguments, always use absolute paths, never use relative paths. \
+2. When using tools with paths as arguments, ALWAYS use absolute paths, NEVER use relative paths. \
 3. pytest is installed. You can use bash_command tool to run pytest by "python -m pytest ..." instead "pytest ...". Always use pytest to run specific single test files or several tests. Never use pytest in the whole repository. \
 4. Use multiple tools to save calls. \
+5. If you need to set environment variables, use bash_command tool like this: 'TEST=hello python -c \"import os; print(os.environ[\'TEST\']) world\"'. Never use 'export TEST=hello' in the shell.
+
+Example:
+If you want to test a file named test_file.py, use bash_command with:
+'python -m pytest {repo_path}/test_dir/test_file.py' where path must be absolute path.
+If you want to edit a file, use the edit tool to edit the file with absolute path.
 """
 )
 
@@ -134,6 +149,17 @@ Some Notes: \
 2. If you are running tests, provide the test results. \
 3. All of the files you mentioned MUST be ABSOLUTE paths. \
 4. It step solver agent need more steps to process the request, you should summarize that the agent was not successful. \
+Example: \
+Trajectory: Executor created a test file and wrote a test case. \
+Summary: A new test file named test_feature.py was successfully created in the absolute path /project/tests/test_feature.py. In this file, a test case named test_feature_functionality was written to verify the core functionality of the feature_functionality method in the Feature class. The test case includes assertions that check for expected outcomes based on specific input values, ensuring that the method behaves correctly under various conditions. This test file is now ready for execution. \
+Trajectory: Executor ran the test case and obtained a pass result. \
+Summary: The test case test_feature_functionality was executed in the absolute path /project/tests/test_feature.py and successfully passed all assertions. The test results indicate that the feature_functionality method behaves as expected under the tested conditions, confirming its correctness. No errors or failures were encountered during the test execution, and the method is considered stable for the inputs tested. \
+Trajectory: Executor ran the test case, and an error occurred during execution. \
+Summary: The test case test_feature_functionality was executed in the absolute path /project/tests/test_feature.py and encountered an error. The error message indicates that ... \
+Trajectory: Executor edited a file \
+Summary: The absolute path /path/to/file/file.py was successfully edited with the updated code. The changes made to the file are as follows: \
+Trajectory: Executor viewed a file \
+Summary: The absolute path /path/to/file/file.py was successfully viewed. We found that ... \
 '),
         ("placeholder", "{messages}"),
         ('user', 'Now give me your execution summary and result.'),
@@ -171,6 +197,15 @@ Some Notes:
 6. Never create new branches or switch to other branches. Never check out to other commits. Always edit the files in the current commit. \
 7. Never create new branches or switch to other branches. Never check out to other commits. Always edit the files in the current commit. \
 8. If meeting package version conflicts or missing packages, use pip to downgrade or install the package. \
+    
+Example:
+Objective: Implement a new feature to validate email addresses during user registration.
+["Create a new test file named test_email_validation.py in the directory {repo_path}/tests/user/. In this file, write multiple test cases to check the behavior of the email validation feature, including cases for valid email formats, invalid email formats, and edge cases like empty or missing email fields.", \
+    "Run the test file test_email_validation.py to verify that the current implementation does not pass the tests. Since the email validation feature has not been implemented yet, the tests should fail.", \
+    "Identify the related files where the email validation logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the email validation logic needs to be added or modified.", \
+    "Implement the email validation logic in the identified files. This includes writing the necessary code to check the format of the email address using appropriate validation rules.", \
+    "Run the test file test_email_validation.py again to verify that the tests now pass, indicating that the email validation feature has been correctly implemented.", \
+    "End the plan here."]
 """
 )
 
@@ -178,7 +213,7 @@ def do_prediction_plan(data, logger: Optional[logging.Logger] = None):
     logger = logger if logger is not None else logging.getLogger(do_prediction_plan.__name__)
     with SWEVM(data=data, create_code_base=False, logger=logger.getChild("vm")) as vm:
         logger.info(f"Starting do prediction for {data['instance_id']}.")
-        execution_limit = 20
+        execution_limit = 30
         
         tools = create_tools(vm)
         planner_llm = ChatOpenAI(model='gpt-4o-mini', temperature=0, top_p=0.95)
