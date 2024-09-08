@@ -30,7 +30,7 @@ def predict(inputs: dict):
         "model_name_or_path":"gpt-4o-mini"
     }
 
-dataset = list(client.list_examples(dataset_id="ef311ba7-75d8-4c87-a888-ee7257d796ff"))
+dataset = list(client.list_examples(dataset_id="b0d01694-cdf6-4142-a93f-29b891d23682"))
 for d in dataset:
     d.inputs['version'] = d.inputs['version'].split(":")[1]
 
@@ -43,7 +43,7 @@ dataset = random.sample(dataset, 3)
 eval_result = evaluate(
     predict,
     data=dataset,
-    max_concurrency=4,
+    max_concurrency=1,
 )
 
 predictions = {
