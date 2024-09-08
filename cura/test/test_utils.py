@@ -1,23 +1,26 @@
 from cura.utils import timeout
-import asyncio
+import time
+from concurrent.futures import TimeoutError
 
 def test_timeout():
     @timeout(1)
-    async def test():
-        await asyncio.sleep(2)
+    def test():
+        time.sleep(2)
     try:
-        asyncio.run(test())
-    except asyncio.TimeoutError:
+        test()
+    except TimeoutError:
         pass
     else:
         assert False, "Should have raised a TimeoutError"
         
     @timeout(1)
-    async def test():
-        await asyncio.sleep(0.5)
+    def test():
+        time.sleep(0.5)
+        return "Success"
     try:
-        asyncio.run(test())
-    except asyncio.TimeoutError:
+        result = test()
+        assert result == "Success"
+    except TimeoutError:
         assert False, "Should not have raised a TimeoutError"
     else:
         pass

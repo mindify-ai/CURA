@@ -20,7 +20,7 @@ class FileEditor:
         if line_index < 0:
             self._current_line = 0
         elif line_index >= len(self._content_lines):
-            self._current_line = len(self._content_lines) - self._display_lines
+            self._current_line = max(len(self._content_lines) - self._display_lines, 0)
         else:
             self._current_line = line_index
         
@@ -32,7 +32,7 @@ class FileEditor:
         
     def display(self)->str:
         output = "-"*49 + "\n"
-        output += f"File Editor: {self.file_path}\n\n"
+        output += f"File Viewer: {self.file_path}\n\n"
         
         start = self._current_line
         end = min(len(self._content_lines), start + self._display_lines)

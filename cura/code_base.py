@@ -32,11 +32,16 @@ class CodeBase:
         self.retriever = ParentDocumentRetriever(
             vectorstore=self.vector_store,
             docstore=self.storage,
-            child_splitter=RecursiveCharacterTextSplitter()
+            child_splitter=RecursiveCharacterTextSplitter(),
+            search_type="mmr",
+            search_kwargs={
+                'k': 20,
+                #'score_threshold': 0.05,
+            }
         )
     
     def add_files(self, files: set[str]):
-        file_contents = { file: self._get_file_content(file) for file in files }
+        file_contents = { file: self._get_file_content(file) for file in files if self._get_file_content(file) != "" }
         extension_to_splitter = {
             ".py": RecursiveCharacterTextSplitter(separators=["\nclass ", "\ndef ", "\n\tdef "]),
             ".md": RecursiveCharacterTextSplitter.from_language(

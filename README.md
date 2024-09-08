@@ -1,4 +1,4 @@
-# CURA - Code understanding and reasoning agent
+# CURA - Code Understanding and Reasoning Agent
 
 ## Getting started
 

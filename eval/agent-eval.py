@@ -1,58 +1,6 @@
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-# %%
+
 import dotenv
 dotenv.load_dotenv()
-
-# %%
-import pandas as pd
-from langsmith import Client
-
-splits = {'dev': 'data/dev-00000-of-00001.parquet', 'test': 'data/test-00000-of-00001.parquet', 'train': 'data/train-00000-of-00001.parquet'}
-df = pd.read_parquet("hf://datasets/princeton-nlp/SWE-bench_Verified/" + splits["test"])
-df['version'] = df['version'].apply(lambda x: f"version:{x}")
-df.to_csv("data/SWE-bench-test.csv",index=False)
-
-client = Client()
-
-dataset = client.upload_csv(
-    csv_file="data/SWE-bench-test.csv",
-    input_keys=list(df.columns),
-    output_keys=[],
-    name="swe-bench-test-eval-verified-27-NEXT-nighthawk",
-    description="SWE-bench-test dataset",
-    data_type="kv"
-)
-# %%
-from langsmith.evaluation import evaluate
-from langsmith import Client
-from cura.prediction import do_prediction
-import random
-
-client = Client()
-
-def predict(inputs: dict):
-    return {
-        "instance_id":inputs['instance_id'],
-        "model_patch": do_prediction(inputs),
-        "model_name_or_path":"test-model"
-    }
-
-test_dataset = list(client.list_examples(dataset_id=dataset.id))
-# random sample 10 examples from the dataset
-#random.seed(42)
-#random_examples = random.sample(test_dataset, 10)
-
-result = evaluate(
-    predict,
-    data=test_dataset,
-    max_concurrency=1,
-)
-
-
-
-# %%
 from swebench.harness.run_evaluation import run_instances
 import resource
 import docker
@@ -61,6 +9,49 @@ from swebench.harness.docker_build import build_env_images
 from pathlib import Path
 import json
 import os
+from langsmith.evaluation import evaluate_existing
+from langsmith.schemas import Example, Run
+
+
+from langsmith.evaluation import evaluate
+from langsmith import Client
+from cura.prediction import do_prediction_plan
+import random
+from swebench.harness.constants import USE_X86
+import platform
+
+
+
+client = Client()
+def predict(inputs: dict):
+    return {
+        "instance_id":inputs['instance_id'],
+        "model_patch": do_prediction_plan(inputs),
+        "model_name_or_path":"gpt-4o-mini"
+    }
+
+dataset = list(client.list_examples(dataset_id="ef311ba7-75d8-4c87-a888-ee7257d796ff"))
+for d in dataset:
+    d.inputs['version'] = d.inputs['version'].split(":")[1]
+
+if platform.machine() == 'arm64':
+    dataset = [d for d in dataset if d.inputs['instance_id'] not in USE_X86]
+
+random.seed(42)
+dataset = random.sample(dataset, 3)
+
+eval_result = evaluate(
+    predict,
+    data=dataset,
+    max_concurrency=4,
+)
+
+predictions = {
+    res['run'].outputs['instance_id']: {**res['run'].outputs, 'run_id': str(res['run'].id)}
+    for res in eval_result
+}
+instances = [data.inputs for data in dataset]
+
 
 RUN_EVALUATION_LOG_DIR = Path("logs/run_evaluation")
 LANGSMITH_EVALUATION_DIR = './langsmith_feedback/feedback.json'
@@ -118,7 +109,7 @@ def convert_runs_to_langsmith_feedback(
 
 def evaluate_predictions(
         dataset: list,
-        predictions: list,
+        predictions: dict,
         max_workers: int,
         force_rebuild: bool,
         cache_level: str,
@@ -146,32 +137,17 @@ def evaluate_predictions(
 
     convert_runs_to_langsmith_feedback(predictions,dataset,run_id)
 
-# %%
-dataset = []
-predictions = {}
-for res in result:
-    predictions[res['run'].outputs['instance_id']] = {**res['run'].outputs,**{"run_id":str(res['run'].id)}}
-    dataset.append(res['run'].inputs['inputs'])
-for d in dataset:
-    d['version'] = d['version'].split(":")[1]
 
-# %%
-predictions
 
-# %%
-evaluate_predictions(dataset,predictions,max_workers=8,force_rebuild=False,cache_level="env",clean=False \
+evaluate_predictions(instances,predictions,max_workers=8,force_rebuild=False,cache_level="env",clean=False \
                      ,open_file_limit=4096,run_id="test",timeout=1_800)
-
-# %%
-from langsmith.evaluation import evaluate_existing
-from langsmith.schemas import Example, Run
 
 def swe_bench_evaluator(run: Run, example: Example):
     with open(LANGSMITH_EVALUATION_DIR, 'r') as json_file:
         langsmith_eval = json.load(json_file)
     return {"results": langsmith_eval[str(run.id)]}
 
-experiment_name = result.experiment_name
+experiment_name = eval_result.experiment_name
 evaluate_existing(experiment_name, evaluators=[swe_bench_evaluator])
 
 

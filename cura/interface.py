@@ -3,11 +3,12 @@ import git
 import os
 import traceback
 from directory_tree import display_tree
+from typing import Optional
 
 
 class Interface:
 
-    def directory_tree(self, dir: str, max_depth: int) -> str:
+    def directory_tree(self, dir: str, max_depth: int) -> Optional[str]:
         return display_tree(dir_path=dir, string_rep=True, max_depth=max_depth)
 
     def find_file(self, file_name: str, dir: str) -> list[str]:
@@ -113,15 +114,32 @@ class Interface:
             contents = f.read()
         return contents
 
-    def write_file(self, file_path: str, content: str):
+    def write_file(self, file_path: str, content: str) -> bool:
         """Writes content to a file.
-
+        
         Args:
             file_path (str): The path to the file.
             content (str): The content to write to the file.
+            
+        Returns:
+            bool: True if the file was written successfully, False otherwise.
         """
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
+        
+        return os.path.isfile(file_path)
+    
+    def file_exists(self, file_path: str) -> bool:
+        """Checks if a file exists.
+
+        Args:
+            file_path (str): The path to the file.
+
+        Returns:
+            bool: True if the file exists, False otherwise.
+        """
+        return os.path.exists(file_path)
 
 
 app = Flask(__name__)
@@ -137,8 +155,8 @@ def execute_command(command):
         result = func(*args)
         return jsonify(result)
     except Exception as e:
-        error_message = f"{str(e)}\n{traceback.format_exc()}"
-        return Response(error_message, status=400)
+        error_message = {"error": str(e), "traceback": traceback.format_exc()}
+        return jsonify(error_message), 400
 
 
 if __name__ == "__main__":

@@ -10,6 +10,10 @@ def test_vm_run_command():
     with VirtualMachine("ubuntu:latest") as vm:
         assert vm.run_command("ls") is not None
         assert vm.run_command("pwd") == "/\n"
+
+def test_bash_command():
+    with VirtualMachine("ubuntu:latest") as vm:
+        assert "bin" in vm.bash_command("cd / && ls")
         
 def test_vm_run_command_async():
     with VirtualMachine("ubuntu:latest") as vm:
