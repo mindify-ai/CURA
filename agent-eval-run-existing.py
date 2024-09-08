@@ -24,43 +24,16 @@ from cura.utils import timeout
 
 
 
-client = Client()
-def predict(inputs: dict):
-    @timeout(500)
-    def get_patch_with_timeout(inputs: dict):
-        patch = do_prediction_plan(inputs)
-        return patch
-    try:
-        patch = get_patch_with_timeout(inputs)
-    except Exception:
-        patch = ""
-    return {
-        "instance_id":inputs['instance_id'],
-        "model_patch": patch,
-        "model_name_or_path":"gpt-4o-mini"
-    }
-
-dataset = list(client.list_examples(dataset_id="ef311ba7-75d8-4c87-a888-ee7257d796ff"))
-for d in dataset:
-    d.inputs['version'] = d.inputs['version'].split(":")[1]
-
-if platform.machine() == 'arm64':
-    dataset = [d for d in dataset if d.inputs['instance_id'] not in USE_X86]
-
-random.seed(42)
-dataset = random.sample(dataset, 20)
-
-eval_result = evaluate(
-    predict,
-    data=dataset,
-    max_concurrency=1,
-)
-
+eval_result = evaluate_existing("vacant-connection-76-dbe99f")
+experiment_name = eval_result.experiment_name
+eval_result = [res for res in eval_result if res['run'].outputs is not None]
 predictions = {
     res['run'].outputs['instance_id']: {**res['run'].outputs, 'run_id': str(res['run'].id)}
     for res in eval_result
 }
-instances = [data.inputs for data in dataset]
+instances = []
+for res in eval_result:
+    instances.append(res['run'].inputs['inputs'])
 
 
 RUN_EVALUATION_LOG_DIR = Path("logs/run_evaluation")
@@ -160,7 +133,7 @@ def swe_bench_evaluator(run: Run, example: Example):
         langsmith_eval = json.load(json_file)
     return {"results": langsmith_eval[str(run.id)]}
 
-experiment_name = eval_result.experiment_name
+
 evaluate_existing(experiment_name, evaluators=[swe_bench_evaluator])
 
 

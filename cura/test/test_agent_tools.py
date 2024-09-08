@@ -15,6 +15,13 @@ def test_bash_command():
         )
         assert "bin" in result
         
+        result = bash_tool.invoke(
+            {
+                "command": 'TEST=HELLO python -c \"import os; print(os.environ[\'TEST\'])\"'
+            }
+        )
+        assert "HELLO" in result
+        
         
         result = bash_tool.invoke(
             {
