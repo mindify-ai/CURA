@@ -22,8 +22,6 @@ def create_tools(vm: SWEVM):
         Returns:
             str: The output of the command.
         """
-        #env_vars = ' '.join([f'{k}={shlex.quote(v)}' for k, v in environment_variables.items()])
-        #safe_command = f"{env_vars} {command}"
 
         @timeout(120)
         def run_command_with_timeout(command: str) -> str:
@@ -45,7 +43,7 @@ def create_tools(vm: SWEVM):
 
         Args:
             dir_path (str, optional): Directory to print the tree of. Defaults to the root directory of the repo.
-            max_depth (int, optional): Maximum depth to print the tree. Defaults to 3.
+            max_depth (int, optional): Maximum depth to print the tree. Defaults to 1.
 
         Returns:
             str: The directory tree.

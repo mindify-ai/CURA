@@ -22,7 +22,7 @@ import platform
 import shutil
 from cura.utils import timeout
 
-import pandas as pd
+
 client = Client()
 
 def predict(inputs: dict):
@@ -42,7 +42,15 @@ def predict(inputs: dict):
         "model_name_or_path":"gpt-4o-mini"
     }
 
-dataset = client.list_examples(dataset_id="a9bffcdf-1dfe-4aef-8805-8806f0110067",splits=["test"])
+dataset = list(client.list_examples(dataset_id="b0d01694-cdf6-4142-a93f-29b891d23682"))
+for d in dataset:
+    d.inputs['version'] = d.inputs['version'].split(":")[1]
+
+if platform.machine() == 'arm64':
+    dataset = [d for d in dataset if d.inputs['instance_id'] not in USE_X86]
+
+random.seed(70)
+dataset = random.sample(dataset, 10)
 
 eval_result = evaluate(
     predict,
