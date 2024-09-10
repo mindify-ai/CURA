@@ -1,4 +1,3 @@
-import dotenv
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
@@ -13,7 +12,6 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langgraph.graph import StateGraph, START, END
 from langgraph.errors import GraphRecursionError
 import logging
-dotenv.load_dotenv()
 
 system_prompt = "You are an autonomous programmer, and you are working with several tools to help you solve software engineering problems step by step. "\
 "Your goal is to solve the issue provided by the user. You can use the tools provided to help you solve the issue. "
