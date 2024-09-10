@@ -103,20 +103,16 @@ Some Notes:
 
 Example:
 Objective: Implement a new feature to validate email addresses during user registration.
-["Use directory tree tool to identify the whole project structure and the main files. Report the important files and the structure of the project. \
-    "Create a new test file named test_email_validation.py in the directory /repo/tests/user/. In this file, write multiple test cases to check the behavior of the email validation feature, including cases for valid email formats, invalid email formats, and edge cases like empty or missing email fields.", \
-    "Use bash command to run the test file test_email_validation.py to verify that the current implementation does not pass the tests. Since the email validation feature has not been implemented yet, the tests should fail.", \
-    "Identify the related files where the email validation logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the email validation logic needs to be added or modified.", \
+["Use directory tree tool and other retriever tool to identify the related files where the email validation logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the email validation logic needs to be added or modified.", \
     "Implement the email validation logic in the identified files. This includes writing the necessary code to check the format of the email address using appropriate validation rules.", \
-    "Use bash command to run the test file test_email_validation.py again to verify that the tests now pass, indicating that the email validation feature has been correctly implemented."]
+    "Create a new test file named test_email_validation.py in the directory /repo/tests/user/. In this file, write multiple test cases to check the behavior of the email validation feature, including cases for valid email formats, invalid email formats, and edge cases like empty or missing email fields.", \
+    "Use bash command to run the test file /repo/tests/user/test_email_validation.py again to verify that the tests now pass, indicating that the email validation feature has been correctly implemented."]
 
 Objective: Fix a bug where users cannot reset their password because the reset link is not being sent via email.
-["Use directory tree tool to identify the main files that are related to the password reset feature. \
-    "Create a new test file named test_password_reset.py in the directory /repo/tests/user/. In this file, write multiple test cases to check the behavior of the password reset feature, including cases for valid password reset requests, invalid password reset requests, and edge cases like empty or missing email fields.", \
-    "Use bash command to run the test file test_password_reset.py to verify that the current implementation does not pass the tests. Since the password reset feature has not been implemented yet, the tests should fail.", \
-    "Identify the related files where the password reset logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the password reset logic needs to be added or modified.", \
+["Use directory tree tool and other retriever tool to identify the related files where the password reset logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the password reset logic needs to be added or modified.", \
     "Implement the password reset logic in the identified files. This includes writing the necessary code to send a reset link to the user's email address when they request a password reset.", \
-    "Use bash command to run the test file test_password_reset.py again to verify that the tests now pass, indicating that the password reset feature has been correctly implemented."]
+    "Create a new test file named test_password_reset.py in the directory /repo/tests/user/. In this file, write multiple test cases to check the behavior of the password reset feature, including cases for valid password reset requests, invalid password reset requests, and edge cases like empty or missing email fields.", \
+    "Use bash command to run the test file /repo/tests/user/test_password_reset.py again to verify that the tests now pass, indicating that the password reset feature has been correctly implemented."]
 """
 )
 
@@ -207,20 +203,16 @@ Some Notes:
     
 Example:
 Objective: Implement a new feature to validate email addresses during user registration.
-["Use directory tree tool to identify the whole project structure and the main files. Report the important files and the structure of the project. \
-    "Create a new test file named test_email_validation.py in the directory /repo/tests/user/. In this file, write multiple test cases to check the behavior of the email validation feature, including cases for valid email formats, invalid email formats, and edge cases like empty or missing email fields.", \
-    "Use bash command to run the test file test_email_validation.py to verify that the current implementation does not pass the tests. Since the email validation feature has not been implemented yet, the tests should fail.", \
-    "Identify the related files where the email validation logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the email validation logic needs to be added or modified.", \
+["Use directory tree tool and other retriever tool to identify the related files where the email validation logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the email validation logic needs to be added or modified.", \
     "Implement the email validation logic in the identified files. This includes writing the necessary code to check the format of the email address using appropriate validation rules.", \
-    "Use bash command to run the test file test_email_validation.py again to verify that the tests now pass, indicating that the email validation feature has been correctly implemented."]
+    "Create a new test file named test_email_validation.py in the directory /repo/tests/user/. In this file, write multiple test cases to check the behavior of the email validation feature, including cases for valid email formats, invalid email formats, and edge cases like empty or missing email fields.", \
+    "Use bash command to run the test file /repo/tests/user/test_email_validation.py again to verify that the tests now pass, indicating that the email validation feature has been correctly implemented."]
 
 Objective: Fix a bug where users cannot reset their password because the reset link is not being sent via email.
-["Use directory tree tool to identify the main files that are related to the password reset feature. \
-    "Create a new test file named test_password_reset.py in the directory /repo/tests/user/. In this file, write multiple test cases to check the behavior of the password reset feature, including cases for valid password reset requests, invalid password reset requests, and edge cases like empty or missing email fields.", \
-    "Use bash command to run the test file test_password_reset.py to verify that the current implementation does not pass the tests. Since the password reset feature has not been implemented yet, the tests should fail.", \
-    "Identify the related files where the password reset logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the password reset logic needs to be added or modified.", \
+["Use directory tree tool and other retriever tool to identify the related files where the password reset logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the password reset logic needs to be added or modified.", \
     "Implement the password reset logic in the identified files. This includes writing the necessary code to send a reset link to the user's email address when they request a password reset.", \
-    "Use bash command to run the test file test_password_reset.py again to verify that the tests now pass, indicating that the password reset feature has been correctly implemented."]
+    "Create a new test file named test_password_reset.py in the directory /repo/tests/user/. In this file, write multiple test cases to check the behavior of the password reset feature, including cases for valid password reset requests, invalid password reset requests, and edge cases like empty or missing email fields.", \
+    "Use bash command to run the test file /repo/tests/user/test_password_reset.py again to verify that the tests now pass, indicating that the password reset feature has been correctly implemented."]
 """
 )
 
