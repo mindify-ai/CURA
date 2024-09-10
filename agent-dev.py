@@ -28,7 +28,7 @@ def main():
     if platform.machine() == 'arm64':
         swebench = swebench.filter(lambda x: x['instance_id'] not in USE_X86)
 
-    data = swebench.shuffle(seed=9).select(range(1))[0]
+    data = swebench
     logger.info(f"Data: {data}")
     patch = do_prediction_plan(data, logger=logger)
     logger.info(f"Patch: {patch}")

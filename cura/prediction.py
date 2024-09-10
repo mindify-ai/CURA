@@ -195,7 +195,6 @@ Some Notes:
 4. Use test-driven to solve the problem. Create new test files to write tests and then write the code to pass the tests, do not modify the existing test files.
 5. pytest is installed. You can use bash_command tool to run pytest. Always use pytest to run specific single test files or several tests. Never use pytest in the whole repository. \
 6. Never create new branches or switch to other branches. Never check out to other commits. Always edit the files in the current commit. \
-7. Never create new branches or switch to other branches. Never check out to other commits. Always edit the files in the current commit. \
 8. If meeting package version conflicts or missing packages, use pip to downgrade or install the package. \
     
 Example:
