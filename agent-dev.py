@@ -1,6 +1,9 @@
 import logging
 import time
 from pathlib import Path
+import argparse
+import shutil
+import os
 
 Path("logs/agent-dev").mkdir(parents=True, exist_ok=True)
 logging.basicConfig(
@@ -22,13 +25,11 @@ dotenv.load_dotenv()
 
 
 
-def main():
+def main(instance_id: str):
     logger = logging.getLogger("agent-dev")
     swebench = load_dataset('princeton-nlp/SWE-bench_Verified', split='test')
-    if platform.machine() == 'arm64':
-        swebench = swebench.filter(lambda x: x['instance_id'] not in USE_X86)
 
-    data = swebench.shuffle(seed=8).select(range(1))[0]
+    data = swebench.filter(lambda x: x['instance_id'] == instance_id)[0]
     logger.info(f"Data: {data}")
     patch = do_prediction_plan(data, logger=logger)
     logger.info(f"Patch: {patch}")
@@ -39,6 +40,10 @@ def main():
             'instance_id': data['instance_id']
         }
     }
+    evaluation_folder = f"logs/run_evaluation/test/gpt-4o-mini/{data['instance_id']}"
+    if os.path.exists(evaluation_folder):
+        shutil.rmtree(evaluation_folder)
+        
     run_instances(
         predictions=predictions,
         instances=[data],
@@ -49,7 +54,10 @@ def main():
         max_workers=1,
         timeout=180,
     )
-    logger.info(f"Done")
+    logger.info("Done")
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--instance_id', type=str)
+    args = parser.parse_args()
+    main(args.instance_id)

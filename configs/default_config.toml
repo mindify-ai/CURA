@@ -1,0 +1,10 @@
+[dataset]
+id = "ef311ba7-75d8-4c87-a888-ee7257d796ff"
+count = 1
+# Specify the count of examples to evaluate, if you want to evaluate all examples, specify "all"
+experiment_name = "None"
+# Specify the experiment name if you want to evaluate an existing experiment, otherwise specify "None"
+
+[model]
+company = "openai"
+model = "gpt-4o-mini"
