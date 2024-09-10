@@ -5,6 +5,3 @@ count = 1
 experiment_name = "None"
 # Specify the experiment name if you want to evaluate an existing experiment, otherwise specify "None"
 
-[model]
-company = "openai"
-model = "gpt-4o-mini"

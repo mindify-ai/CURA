@@ -94,6 +94,7 @@ Here is the objective: {objective}. Finally, you need to provide step that submi
 For the given objective, come up with a simple step by step plan. \
 This plan should involve individual tasks, that if executed correctly will yield the correct answer. Do not add any superfluous steps. \
 Make sure that each step has all the information needed. Do not put numbered lists before each step.
+Here are tools that the executor can use: {tools}. When you make plan, you can specify the tools in your plan, consider the purpose of the tools and use them in the most appropriate way.
 Some Notes: 
 1. The repository has been cloned to the root directory and you are always in the root directory, which is {repo_path}.
 2. The repository has been installed. No need to install the repository again.
@@ -102,22 +103,20 @@ Some Notes:
 
 Example:
 Objective: Implement a new feature to validate email addresses during user registration.
-["Identify the whole project structure and the main files. Report the important files and the structure of the project. \
+["Use directory tree tool to identify the whole project structure and the main files. Report the important files and the structure of the project. \
     "Create a new test file named test_email_validation.py in the directory /repo/tests/user/. In this file, write multiple test cases to check the behavior of the email validation feature, including cases for valid email formats, invalid email formats, and edge cases like empty or missing email fields.", \
-    "Run the test file test_email_validation.py to verify that the current implementation does not pass the tests. Since the email validation feature has not been implemented yet, the tests should fail.", \
+    "Use bash command to run the test file test_email_validation.py to verify that the current implementation does not pass the tests. Since the email validation feature has not been implemented yet, the tests should fail.", \
     "Identify the related files where the email validation logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the email validation logic needs to be added or modified.", \
     "Implement the email validation logic in the identified files. This includes writing the necessary code to check the format of the email address using appropriate validation rules.", \
-    "Run the test file test_email_validation.py again to verify that the tests now pass, indicating that the email validation feature has been correctly implemented.", \
-    "End the plan here."]
+    "Use bash command to run the test file test_email_validation.py again to verify that the tests now pass, indicating that the email validation feature has been correctly implemented."]
 
 Objective: Fix a bug where users cannot reset their password because the reset link is not being sent via email.
-["Identify the main files that are related to the password reset feature. \
+["Use directory tree tool to identify the main files that are related to the password reset feature. \
     "Create a new test file named test_password_reset.py in the directory /repo/tests/user/. In this file, write multiple test cases to check the behavior of the password reset feature, including cases for valid password reset requests, invalid password reset requests, and edge cases like empty or missing email fields.", \
-    "Run the test file test_password_reset.py to verify that the current implementation does not pass the tests. Since the password reset feature has not been implemented yet, the tests should fail.", \
+    "Use bash command to run the test file test_password_reset.py to verify that the current implementation does not pass the tests. Since the password reset feature has not been implemented yet, the tests should fail.", \
     "Identify the related files where the password reset logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the password reset logic needs to be added or modified.", \
     "Implement the password reset logic in the identified files. This includes writing the necessary code to send a reset link to the user's email address when they request a password reset.", \
-    "Run the test file test_password_reset.py again to verify that the tests now pass, indicating that the password reset feature has been correctly implemented.", \
-    "End the plan here."]
+    "Use bash command to run the test file test_password_reset.py again to verify that the tests now pass, indicating that the password reset feature has been correctly implemented."]
 """
 )
 
@@ -180,6 +179,7 @@ This plan should involve individual tasks, that if executed correctly will yield
 Make sure that each step has all the information needed - do not skip steps. \
 If the last step is not successful or the step summary is not satisfactory, update the plan, otherwise keep the plan. \
 If the current step is the last step, the program will automatically submit the patch. You don't need to do any step to submit the patch. \
+Here are tools that the executor can use: {tools}. When you make plan, you can specify the tools in your plan, consider the purpose of the tools and use them in the most appropriate way.
     
 When you update the plan, the provided plan will replace redundant steps with the new steps. \
 For example, if the plan is ["step1", "step2", "step3"] and we are currently finishing step2, you can provide ['step4', 'step5'] and the new plan will be ["step1", "step2", "step4", "step5"]. The next step will be step4. \
@@ -207,21 +207,20 @@ Some Notes:
     
 Example:
 Objective: Implement a new feature to validate email addresses during user registration.
-["Create a new test file named test_email_validation.py in the directory {repo_path}/tests/user/. In this file, write multiple test cases to check the behavior of the email validation feature, including cases for valid email formats, invalid email formats, and edge cases like empty or missing email fields.", \
-    "Run the test file test_email_validation.py to verify that the current implementation does not pass the tests. Since the email validation feature has not been implemented yet, the tests should fail.", \
+["Use directory tree tool to identify the whole project structure and the main files. Report the important files and the structure of the project. \
+    "Create a new test file named test_email_validation.py in the directory /repo/tests/user/. In this file, write multiple test cases to check the behavior of the email validation feature, including cases for valid email formats, invalid email formats, and edge cases like empty or missing email fields.", \
+    "Use bash command to run the test file test_email_validation.py to verify that the current implementation does not pass the tests. Since the email validation feature has not been implemented yet, the tests should fail.", \
     "Identify the related files where the email validation logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the email validation logic needs to be added or modified.", \
     "Implement the email validation logic in the identified files. This includes writing the necessary code to check the format of the email address using appropriate validation rules.", \
-    "Run the test file test_email_validation.py again to verify that the tests now pass, indicating that the email validation feature has been correctly implemented.", \
-    "End the plan here."]
+    "Use bash command to run the test file test_email_validation.py again to verify that the tests now pass, indicating that the email validation feature has been correctly implemented."]
 
 Objective: Fix a bug where users cannot reset their password because the reset link is not being sent via email.
-["Identify the main files that are related to the password reset feature. \
+["Use directory tree tool to identify the main files that are related to the password reset feature. \
     "Create a new test file named test_password_reset.py in the directory /repo/tests/user/. In this file, write multiple test cases to check the behavior of the password reset feature, including cases for valid password reset requests, invalid password reset requests, and edge cases like empty or missing email fields.", \
-    "Run the test file test_password_reset.py to verify that the current implementation does not pass the tests. Since the password reset feature has not been implemented yet, the tests should fail.", \
+    "Use bash command to run the test file test_password_reset.py to verify that the current implementation does not pass the tests. Since the password reset feature has not been implemented yet, the tests should fail.", \
     "Identify the related files where the password reset logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the password reset logic needs to be added or modified.", \
     "Implement the password reset logic in the identified files. This includes writing the necessary code to send a reset link to the user's email address when they request a password reset.", \
-    "Run the test file test_password_reset.py again to verify that the tests now pass, indicating that the password reset feature has been correctly implemented.", \
-    "End the plan here."]
+    "Use bash command to run the test file test_password_reset.py again to verify that the tests now pass, indicating that the password reset feature has been correctly implemented."]
 """
 )
 
@@ -241,13 +240,16 @@ def do_prediction_plan(data, logger: Optional[logging.Logger] = None):
         step_solver = step_solver_prompt | create_react_agent(step_solver_llm, tools=tools.values())
         replanner = replanner_prompt | replanner_llm.with_structured_output(ReplanAction)
         
+        tools_str = "\n".join([f"{tool.name}: {tool.description.splitlines()[0]}" for tool in tools.values()])
+        
         def plan_step(state: AgentState):
             logger.info(f"Planning step for {data['instance_id']}.")
             objective = data['problem_statement']
             plan = planner.invoke(
                 input={
                     "objective": objective,
-                    "repo_path": vm.repo_path
+                    "repo_path": vm.repo_path,
+                    "tools": tools_str
                 }
             )
             state['plan'] = plan.steps
@@ -296,7 +298,8 @@ def do_prediction_plan(data, logger: Optional[logging.Logger] = None):
                     "plan": state['plan'],
                     "history": state['history'],
                     "repo_path": vm.repo_path,
-                    "last_step_result": state['last_step_result']
+                    "last_step_result": state['last_step_result'],
+                    "tools": tools_str
                 }
             )
             if replan_action.revised_plan is None:

@@ -52,7 +52,7 @@ def main(instance_id: str):
         run_id="test",
         force_rebuild=False,
         max_workers=1,
-        timeout=180,
+        timeout=1800,
     )
     logger.info("Done")
 
