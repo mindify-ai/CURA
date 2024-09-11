@@ -1,7 +1,6 @@
 [dataset]
 id = "73edba6d-2c8f-4795-a7d9-114780e08dbb"
-count = 64
+count = "all"
 # Specify the count of examples to evaluate, if you want to evaluate all examples, specify "all"
 experiment_name = "None"
 # Specify the experiment name if you want to evaluate an existing experiment, otherwise specify "None"
-
