@@ -264,10 +264,10 @@ def do_prediction_plan(data, logger: Optional[logging.Logger] = None):
                         "history": state['history'],
                         "repo_path": vm.repo_path,
                         "step": state['plan'][state['current_step']],
-                        "recursion_limit": execution_limit
+                        "recursion_limit": 20
                     },
                     config={
-                        "recursion_limit": execution_limit
+                        "recursion_limit": 20
                     }
                 )['messages']
             except GraphRecursionError:
