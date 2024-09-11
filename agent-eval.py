@@ -42,12 +42,12 @@ def main(config):
             "model_name_or_path":"gpt-4o-mini"
         }
 
-    if config['dataset']['experiment_name'] == "None":
+    if config['dataset']['experiment_name'] == "None":  
         limit: Optional[int] = config['dataset']['count'] if isinstance(config['dataset']['count'], int) else None
         eval_result = evaluate(
             predict,
             data=client.list_examples(dataset_id=config['dataset']['id'], limit=limit),
-            max_concurrency=1,
+            max_concurrency=4,
         )
         experiment_name = eval_result.experiment_name
     else:

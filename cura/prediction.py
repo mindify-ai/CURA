@@ -224,7 +224,7 @@ def do_prediction_plan(data, logger: Optional[logging.Logger] = None):
     logger = logger if logger is not None else logging.getLogger(do_prediction_plan.__name__)
     with SWEVM(data=data, create_code_base=False, logger=logger.getChild("vm")) as vm:
         logger.info(f"Starting do prediction for {data['instance_id']}.")
-        execution_limit = 20
+        execution_limit = 60
         
         tools = create_tools(vm)
         planner_llm = ChatOpenAI(model='gpt-4o-mini', temperature=0, top_p=0.95)
