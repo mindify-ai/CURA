@@ -179,6 +179,10 @@ Here are tools that the executor can use: {tools}. When you make plan, you can s
     
 When you update the plan, the provided plan will replace redundant steps with the new steps. \
 For example, if the plan is ["step1", "step2", "step3"] and we are currently finishing step2, you can provide ['step4', 'step5'] and the new plan will be ["step1", "step2", "step4", "step5"]. The next step will be step4. \
+If the plan is ["step1", "step2", "step3"] and we are currently finishing step3, you can provide ['step4', 'step5'] and the new plan will be ["step1", "step2", "step3", "step4", "step5"]. The next step will be step4. \
+The next step will be the first step in the new plan, Do not put the last step in the new plan, that will duplicate the last step.
+If you want to keep the current plan, just return None. \
+It you want to end the plan, return an empty list [].
 
 Your objective was this:
 {objective}
@@ -299,6 +303,10 @@ def do_prediction_plan(data, logger: Optional[logging.Logger] = None):
                 logger.info(f"No plan was updated for {data['instance_id']}.")
             else:
                 plan = state['plan'][:state['current_step']+1] + replan_action.revised_plan.steps
+
+                for i, step in enumerate(plan):
+                    if step in plan[i+1:]:
+                        plan.pop(i)
                 logger.info(f"Plan was updated for {data['instance_id']}.")
                 logger.debug(f"New plan: {plan}")
             state['plan'] = plan
