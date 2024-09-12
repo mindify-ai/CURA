@@ -25,7 +25,7 @@ RUN conda create -y -n python3.9 python=3.9
 RUN conda create -y -n python3.10 python=3.10
 
 RUN  pip install --upgrade pip && \
-    pip install gitpython flask directory_tree pytest
+    pip install gitpython flask directory_tree pytest chardet
 
 EXPOSE 5001
 

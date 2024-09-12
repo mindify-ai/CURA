@@ -21,3 +21,4 @@ langchain-text-splitters
 langchain-chroma
 pysqlite3-binary
 toml
+chardet
