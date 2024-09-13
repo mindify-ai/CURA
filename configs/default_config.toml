@@ -1,6 +1,20 @@
 [dataset]
-id = "73edba6d-2c8f-4795-a7d9-114780e08dbb"
+id = "ef311ba7-75d8-4c87-a888-ee7257d796ff"
 count = "all"
 # Specify the count of examples to evaluate, if you want to evaluate all examples, specify "all"
 experiment_name = "None"
 # Specify the experiment name if you want to evaluate an existing experiment, otherwise specify "None"
+
+[prediction]
+create_code_base = true
+execution_limit = 20
+tools = ["bash_command", 
+    "directory_tree", 
+    "create_file", 
+    "find_file", 
+    "search_dir", 
+    "search_file",
+    "search_file_fuzzy",
+    "view_file",
+    "edit"
+]

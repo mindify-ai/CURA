@@ -29,7 +29,7 @@ def main(config):
         inputs['version'] = inputs['version'].split(":")[1]
         @timeout_decorator(500)
         def get_patch_with_timeout(inputs: dict):
-            patch = do_prediction_plan(inputs)
+            patch = do_prediction_plan(inputs, config['prediction'])
             return patch
         try:
             patch = get_patch_with_timeout(inputs)
