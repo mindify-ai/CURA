@@ -47,7 +47,7 @@ def main(config):
         eval_result = evaluate(
             predict,
             data=client.list_examples(dataset_id=config['dataset']['id'], limit=limit),
-            max_concurrency=4,
+            max_concurrency=1,
             experiment_prefix="CURA"
         )
         experiment_name = eval_result.experiment_name
@@ -161,7 +161,10 @@ def main(config):
     def swe_bench_evaluator(run: Run, example: Example):
         with open(LANGSMITH_EVALUATION_DIR, 'r') as json_file:
             langsmith_eval = json.load(json_file)
-        return {"results": langsmith_eval[str(run.id)]}
+        if str(run.id) in langsmith_eval:
+            return {"results": langsmith_eval[str(run.id)]}
+        else:
+            return {"results": []}
 
 
     evaluate_existing(experiment_name, evaluators=[swe_bench_evaluator])
