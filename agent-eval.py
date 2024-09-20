@@ -47,7 +47,7 @@ def main(config):
         eval_result = evaluate(
             predict,
             data=client.list_examples(dataset_id=config['dataset']['id'], limit=limit),
-            max_concurrency=4,
+            max_concurrency=2,
         )
         experiment_name = eval_result.experiment_name
     else:
