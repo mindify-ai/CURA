@@ -220,23 +220,26 @@ Objective: Fix a bug where users cannot reset their password because the reset l
 """
 )
 
-def do_prediction_plan(data, logger: Optional[logging.Logger] = None):
+def do_prediction_plan(data, config: dict = {}, logger: Optional[logging.Logger] = None):
     logger = logger if logger is not None else logging.getLogger(do_prediction_plan.__name__)
-    with SWEVM(data=data, create_code_base=False, logger=logger.getChild("vm")) as vm:
+    with SWEVM(data=data, create_code_base=config.get("create_code_base", True), logger=logger.getChild("vm")) as vm:
         logger.info(f"Starting do prediction for {data['instance_id']}.")
-        execution_limit = 30
+        execution_limit = config.get("execution_limit", 30)
         
         tools = create_tools(vm)
+        if config.get("tools"):
+            tools = [tools[tool] for tool in config['tools']]
+        else:
+            tools = list(tools.values())
         planner_llm = ChatOpenAI(model='gpt-4o-mini', temperature=0, top_p=0.95)
         step_solver_llm = ChatOpenAI(model='gpt-4o-mini', temperature=0, top_p=0.95)
-        
         replanner_llm = ChatOpenAI(model='gpt-4o-mini', temperature=0, top_p=0.95)
         
         planner = planner_prompt | planner_llm.with_structured_output(Plan)
-        step_solver = step_solver_prompt | create_react_agent(step_solver_llm, tools=tools.values())
+        step_solver = step_solver_prompt | create_react_agent(step_solver_llm, tools=tools)
         replanner = replanner_prompt | replanner_llm.with_structured_output(ReplanAction)
         
-        tools_str = "\n".join([f"{tool.name}: {tool.description.splitlines()[0]}" for tool in tools.values()])
+        tools_str = "\n".join([f"{tool.name}: {tool.description.splitlines()[0]}" for tool in tools])
         
         def plan_step(state: AgentState):
             logger.info(f"Planning step for {data['instance_id']}.")

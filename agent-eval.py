@@ -1,5 +1,6 @@
 
 import dotenv
+dotenv.load_dotenv()
 import argparse
 import toml
 from swebench.harness.run_evaluation import run_instances
@@ -19,7 +20,7 @@ import shutil
 from cura.utils import timeout as timeout_decorator
 import logging
 from typing import Optional
-dotenv.load_dotenv()
+
 
 def main(config):
     logger = logging.getLogger("Evaluation")
@@ -27,9 +28,8 @@ def main(config):
 
     def predict(inputs: dict):
         inputs['version'] = inputs['version'].split(":")[1]
-        @timeout_decorator(500)
         def get_patch_with_timeout(inputs: dict):
-            patch = do_prediction_plan(inputs)
+            patch = do_prediction_plan(inputs, config['prediction'])
             return patch
         try:
             patch = get_patch_with_timeout(inputs)
@@ -47,7 +47,8 @@ def main(config):
         eval_result = evaluate(
             predict,
             data=client.list_examples(dataset_id=config['dataset']['id'], limit=limit),
-            max_concurrency=2,
+            max_concurrency=1,
+            experiment_prefix="CURA"
         )
         experiment_name = eval_result.experiment_name
     else:
@@ -160,7 +161,10 @@ def main(config):
     def swe_bench_evaluator(run: Run, example: Example):
         with open(LANGSMITH_EVALUATION_DIR, 'r') as json_file:
             langsmith_eval = json.load(json_file)
-        return {"results": langsmith_eval[str(run.id)]}
+        if str(run.id) in langsmith_eval:
+            return {"results": langsmith_eval[str(run.id)]}
+        else:
+            return {"results": []}
 
 
     evaluate_existing(experiment_name, evaluators=[swe_bench_evaluator])

@@ -4,6 +4,8 @@ import os
 import traceback
 from directory_tree import display_tree
 from typing import Optional
+import chardet
+
 
 
 class Interface:
@@ -29,6 +31,20 @@ class Interface:
                     result.append(os.path.abspath(os.path.join(root, file)))
         return result
 
+    def detect_encoding(self, file_path: str) -> str:
+        """Detects the encoding of a file.
+
+        Args:
+            file_path (str): The path to the file.
+
+        Returns:
+            str: The encoding of the file.
+        """
+        with open(file_path, "rb") as f:
+            raw_data = f.read()
+        result = chardet.detect(raw_data)
+        return result["encoding"]
+
     def search_dir(self, search_term: str, dir: str) -> dict[str, int]:
         """
         Search for a specific term in all files within a directory.
@@ -49,7 +65,8 @@ class Interface:
                     break
                 file_path = os.path.join(root, file)
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    encoding = self.detect_encoding(file_path)
+                    with open(file_path, "r", encoding=encoding) as f:
                         contents = f.readlines()
                     match_count = sum(1 for line in contents if search_term in line)
                     if match_count > 0:
@@ -73,7 +90,7 @@ class Interface:
         """
         matches = {}
 
-        with open(file_name, "r", encoding="utf-8") as f:
+        with open(file_name, "r") as f:
             contents = f.readlines()
 
         for i, line in enumerate(contents):
@@ -110,7 +127,8 @@ class Interface:
         """
         if not os.path.exists(file_path):
             raise Exception(f"File path {file_path} does not exist.")
-        with open(file_path, "r", encoding="utf-8") as f:
+        encoding = self.detect_encoding(file_path)
+        with open(file_path, "r", encoding=encoding) as f:
             contents = f.read()
         return contents
 
@@ -125,9 +143,8 @@ class Interface:
             bool: True if the file was written successfully, False otherwise.
         """
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        with open(file_path, "w", encoding="utf-8") as f:
+        with open(file_path, "w") as f:
             f.write(content)
-        
         return os.path.isfile(file_path)
     
     def file_exists(self, file_path: str) -> bool:

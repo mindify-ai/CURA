@@ -6,7 +6,7 @@ experiment_name = "None"
 # Specify the experiment name if you want to evaluate an existing experiment, otherwise specify "None"
 
 [prediction]
-create_code_base = true
+create_code_base = false
 execution_limit = 20
 tools = ["bash_command", 
     "directory_tree", 
@@ -14,7 +14,7 @@ tools = ["bash_command",
     "find_file", 
     "search_dir", 
     "search_file",
-    "search_file_fuzzy",
+    #"search_file_fuzzy",
     "view_file",
     "edit"
 ]
