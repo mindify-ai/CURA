@@ -22,8 +22,6 @@ def create_tools(vm: SWEVM):
         Returns:
             str: The output of the command.
         """
-        #env_vars = ' '.join([f'{k}={shlex.quote(v)}' for k, v in environment_variables.items()])
-        #safe_command = f"{env_vars} {command}"
 
         @timeout(120)
         def run_command_with_timeout(command: str) -> str:
@@ -45,7 +43,7 @@ def create_tools(vm: SWEVM):
 
         Args:
             dir_path (str, optional): Directory to print the tree of. Defaults to the root directory of the repo.
-            max_depth (int, optional): Maximum depth to print the tree. Defaults to 3.
+            max_depth (int, optional): Maximum depth to print the tree. Defaults to 1.
 
         Returns:
             str: The directory tree.
@@ -90,7 +88,7 @@ def create_tools(vm: SWEVM):
         output += "\n".join(result)
         return output
 
-    #@tool
+    @tool
     def search_dir(search_term: str, dir: str = vm.repo_path) -> str:
         """Searches for a specific term in all files within a directory. If dir is not provided, searches in the root directory of the repo.
 
@@ -130,7 +128,7 @@ def create_tools(vm: SWEVM):
             output += "Exceeded 50 matches. Please narrow your search term."
         return output
     
-    #@tool
+    @tool
     def search_file_fuzzy(query: str) -> str:
         """Searches for file paths that match the given fuzzy query. The input query will be transformed into an embedding and compared to the repository's file content embeddings. The closest matches will be returned.
 
@@ -169,48 +167,6 @@ def create_tools(vm: SWEVM):
             scroll_line=100,
         )
         file_editor.goto_line(line_number)
-        return file_editor.display()
-    
-    #@tool
-    def goto_line(line_number: int) -> str:
-        """Moves the window to the given line in the editor. You must open a file first.
-
-        Args:
-            line_number (int): Line number to move to.
-
-        Returns:
-            str: The content of the editor after moving to the line.
-        """
-        global file_editor
-        if file_editor is None:
-            return "No file is currently open, please open a file first."
-        file_editor.goto_line(line_number)
-        return file_editor.display()
-
-    #@tool
-    def scroll_down() -> str:
-        """Scrolls down in the file editor. You must open a file first.
-
-        Returns:
-            str: The new content of the editor after scrolling down.
-        """
-        global file_editor
-        if file_editor is None:
-            return "No file is currently open, please open a file first."
-        file_editor.scroll_down()
-        return file_editor.display()
-
-    #@tool
-    def scroll_up() -> str:
-        """Scrolls up in the file editor. You must open a file first.
-
-        Returns:
-            str: The new content of the editor after scrolling up.
-        """
-        global file_editor
-        if file_editor is None:
-            return "No file is currently open, please open a file first."
-        file_editor.scroll_up()
         return file_editor.display()
 
     @tool
@@ -266,17 +222,5 @@ DO NOT re-run the same failed edit tool. Running it again will lead to the same 
                 )
         else:
             return "Invalid line numbers."
-    #@tool
-    def submit() -> str:
-        """Submit all the repo changes and close the session. You must use this tool after all the changes are made.
-
-        Returns:
-            str: The result of the submission.
-        """
-        patch_content = vm.interface.get_patch_file(vm.repo_path)
-        if not patch_content:
-            return ""
-        else:
-            return patch_content
 
     return {k: v for k, v in locals().items() if isinstance(v, BaseTool)}

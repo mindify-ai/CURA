@@ -1,4 +1,3 @@
-import dotenv
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
@@ -13,7 +12,6 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langgraph.graph import StateGraph, START, END
 from langgraph.errors import GraphRecursionError
 import logging
-dotenv.load_dotenv()
 
 system_prompt = "You are an autonomous programmer, and you are working with several tools to help you solve software engineering problems step by step. "\
 "Your goal is to solve the issue provided by the user. You can use the tools provided to help you solve the issue. "
@@ -96,6 +94,7 @@ Here is the objective: {objective}. Finally, you need to provide step that submi
 For the given objective, come up with a simple step by step plan. \
 This plan should involve individual tasks, that if executed correctly will yield the correct answer. Do not add any superfluous steps. \
 Make sure that each step has all the information needed. Do not put numbered lists before each step.
+Here are tools that the executor can use: {tools}. When you make plan, you can specify the tools in your plan, consider the purpose of the tools and use them in the most appropriate way.
 Some Notes: 
 1. The repository has been cloned to the root directory and you are always in the root directory, which is {repo_path}.
 2. The repository has been installed. No need to install the repository again.
@@ -104,12 +103,16 @@ Some Notes:
 
 Example:
 Objective: Implement a new feature to validate email addresses during user registration.
-["Create a new test file named test_email_validation.py in the directory {repo_path}/tests/user/. In this file, write multiple test cases to check the behavior of the email validation feature, including cases for valid email formats, invalid email formats, and edge cases like empty or missing email fields.", \
-    "Run the test file test_email_validation.py to verify that the current implementation does not pass the tests. Since the email validation feature has not been implemented yet, the tests should fail.", \
-    "Identify the related files where the email validation logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the email validation logic needs to be added or modified.", \
+["Use directory tree tool and other retriever tool to identify the related files where the email validation logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the email validation logic needs to be added or modified.", \
     "Implement the email validation logic in the identified files. This includes writing the necessary code to check the format of the email address using appropriate validation rules.", \
-    "Run the test file test_email_validation.py again to verify that the tests now pass, indicating that the email validation feature has been correctly implemented.", \
-    "End the plan here."]
+    "Create a new test file named test_email_validation.py in the directory /repo/tests/user/. In this file, write multiple test cases to check the behavior of the email validation feature, including cases for valid email formats, invalid email formats, and edge cases like empty or missing email fields.", \
+    "Use bash command to run the test file /repo/tests/user/test_email_validation.py again to verify that the tests now pass, indicating that the email validation feature has been correctly implemented."]
+
+Objective: Fix a bug where users cannot reset their password because the reset link is not being sent via email.
+["Use directory tree tool and other retriever tool to identify the related files where the password reset logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the password reset logic needs to be added or modified.", \
+    "Implement the password reset logic in the identified files. This includes writing the necessary code to send a reset link to the user's email address when they request a password reset.", \
+    "Create a new test file named test_password_reset.py in the directory /repo/tests/user/. In this file, write multiple test cases to check the behavior of the password reset feature, including cases for valid password reset requests, invalid password reset requests, and edge cases like empty or missing email fields.", \
+    "Use bash command to run the test file /repo/tests/user/test_password_reset.py again to verify that the tests now pass, indicating that the password reset feature has been correctly implemented."]
 """
 )
 
@@ -172,9 +175,14 @@ This plan should involve individual tasks, that if executed correctly will yield
 Make sure that each step has all the information needed - do not skip steps. \
 If the last step is not successful or the step summary is not satisfactory, update the plan, otherwise keep the plan. \
 If the current step is the last step, the program will automatically submit the patch. You don't need to do any step to submit the patch. \
+Here are tools that the executor can use: {tools}. When you make plan, you can specify the tools in your plan, consider the purpose of the tools and use them in the most appropriate way.
     
 When you update the plan, the provided plan will replace redundant steps with the new steps. \
 For example, if the plan is ["step1", "step2", "step3"] and we are currently finishing step2, you can provide ['step4', 'step5'] and the new plan will be ["step1", "step2", "step4", "step5"]. The next step will be step4. \
+If the plan is ["step1", "step2", "step3"] and we are currently finishing step3, you can provide ['step4', 'step5'] and the new plan will be ["step1", "step2", "step3", "step4", "step5"]. The next step will be step4. \
+The next step will be the first step in the new plan, Do not put the last step in the new plan, that will duplicate the last step.
+If you want to keep the current plan, just return None. \
+It you want to end the plan, return an empty list [].
 
 Your objective was this:
 {objective}
@@ -195,35 +203,43 @@ Some Notes:
 4. Use test-driven to solve the problem. Create new test files to write tests and then write the code to pass the tests, do not modify the existing test files.
 5. pytest is installed. You can use bash_command tool to run pytest. Always use pytest to run specific single test files or several tests. Never use pytest in the whole repository. \
 6. Never create new branches or switch to other branches. Never check out to other commits. Always edit the files in the current commit. \
-7. Never create new branches or switch to other branches. Never check out to other commits. Always edit the files in the current commit. \
-8. If meeting package version conflicts or missing packages, use pip to downgrade or install the package. \
+7. If meeting package version conflicts or missing packages, use pip to downgrade or install the package. \
     
 Example:
 Objective: Implement a new feature to validate email addresses during user registration.
-["Create a new test file named test_email_validation.py in the directory {repo_path}/tests/user/. In this file, write multiple test cases to check the behavior of the email validation feature, including cases for valid email formats, invalid email formats, and edge cases like empty or missing email fields.", \
-    "Run the test file test_email_validation.py to verify that the current implementation does not pass the tests. Since the email validation feature has not been implemented yet, the tests should fail.", \
-    "Identify the related files where the email validation logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the email validation logic needs to be added or modified.", \
+["Use directory tree tool and other retriever tool to identify the related files where the email validation logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the email validation logic needs to be added or modified.", \
     "Implement the email validation logic in the identified files. This includes writing the necessary code to check the format of the email address using appropriate validation rules.", \
-    "Run the test file test_email_validation.py again to verify that the tests now pass, indicating that the email validation feature has been correctly implemented.", \
-    "End the plan here."]
+    "Create a new test file named test_email_validation.py in the directory /repo/tests/user/. In this file, write multiple test cases to check the behavior of the email validation feature, including cases for valid email formats, invalid email formats, and edge cases like empty or missing email fields.", \
+    "Use bash command to run the test file /repo/tests/user/test_email_validation.py again to verify that the tests now pass, indicating that the email validation feature has been correctly implemented."]
+
+Objective: Fix a bug where users cannot reset their password because the reset link is not being sent via email.
+["Use directory tree tool and other retriever tool to identify the related files where the password reset logic should be implemented, such as user_registration.py and email_utils.py. Document the specific files and lines where the password reset logic needs to be added or modified.", \
+    "Implement the password reset logic in the identified files. This includes writing the necessary code to send a reset link to the user's email address when they request a password reset.", \
+    "Create a new test file named test_password_reset.py in the directory /repo/tests/user/. In this file, write multiple test cases to check the behavior of the password reset feature, including cases for valid password reset requests, invalid password reset requests, and edge cases like empty or missing email fields.", \
+    "Use bash command to run the test file /repo/tests/user/test_password_reset.py again to verify that the tests now pass, indicating that the password reset feature has been correctly implemented."]
 """
 )
 
-def do_prediction_plan(data, logger: Optional[logging.Logger] = None):
+def do_prediction_plan(data, config: dict = {}, logger: Optional[logging.Logger] = None):
     logger = logger if logger is not None else logging.getLogger(do_prediction_plan.__name__)
-    with SWEVM(data=data, create_code_base=False, logger=logger.getChild("vm")) as vm:
+    with SWEVM(data=data, create_code_base=config.get("create_code_base", True), logger=logger.getChild("vm")) as vm:
         logger.info(f"Starting do prediction for {data['instance_id']}.")
-        execution_limit = 30
+        execution_limit = config.get("execution_limit", 30)
         
         tools = create_tools(vm)
+        if config.get("tools"):
+            tools = [tools[tool] for tool in config['tools']]
+        else:
+            tools = list(tools.values())
         planner_llm = ChatOpenAI(model='gpt-4o-mini', temperature=0, top_p=0.95)
         step_solver_llm = ChatOpenAI(model='gpt-4o-mini', temperature=0, top_p=0.95)
-        
         replanner_llm = ChatOpenAI(model='gpt-4o-mini', temperature=0, top_p=0.95)
         
         planner = planner_prompt | planner_llm.with_structured_output(Plan)
-        step_solver = step_solver_prompt | create_react_agent(step_solver_llm, tools=tools.values())
+        step_solver = step_solver_prompt | create_react_agent(step_solver_llm, tools=tools)
         replanner = replanner_prompt | replanner_llm.with_structured_output(ReplanAction)
+        
+        tools_str = "\n".join([f"{tool.name}: {tool.description.splitlines()[0]}" for tool in tools])
         
         def plan_step(state: AgentState):
             logger.info(f"Planning step for {data['instance_id']}.")
@@ -231,7 +247,8 @@ def do_prediction_plan(data, logger: Optional[logging.Logger] = None):
             plan = planner.invoke(
                 input={
                     "objective": objective,
-                    "repo_path": vm.repo_path
+                    "repo_path": vm.repo_path,
+                    "tools": tools_str
                 }
             )
             state['plan'] = plan.steps
@@ -246,14 +263,14 @@ def do_prediction_plan(data, logger: Optional[logging.Logger] = None):
                 result_messages = step_solver.invoke(
                     input={
                         "objective": objective,
-                        "plan": state['plan'],
+                        "plan": state['plan'][-5:],
                         "history": state['history'],
                         "repo_path": vm.repo_path,
                         "step": state['plan'][state['current_step']],
-                        "recursion_limit": execution_limit
+                        "recursion_limit": 20
                     },
                     config={
-                        "recursion_limit": execution_limit
+                        "recursion_limit": 20
                     }
                 )['messages']
             except GraphRecursionError:
@@ -280,7 +297,8 @@ def do_prediction_plan(data, logger: Optional[logging.Logger] = None):
                     "plan": state['plan'],
                     "history": state['history'],
                     "repo_path": vm.repo_path,
-                    "last_step_result": state['last_step_result']
+                    "last_step_result": state['last_step_result'],
+                    "tools": tools_str
                 }
             )
             if replan_action.revised_plan is None:
@@ -288,6 +306,10 @@ def do_prediction_plan(data, logger: Optional[logging.Logger] = None):
                 logger.info(f"No plan was updated for {data['instance_id']}.")
             else:
                 plan = state['plan'][:state['current_step']+1] + replan_action.revised_plan.steps
+
+                for i, step in enumerate(plan):
+                    if step in plan[i+1:]:
+                        plan.pop(i)
                 logger.info(f"Plan was updated for {data['instance_id']}.")
                 logger.debug(f"New plan: {plan}")
             state['plan'] = plan
@@ -322,7 +344,7 @@ def do_prediction_plan(data, logger: Optional[logging.Logger] = None):
         }
         try:
             logger.info("Start graph execution.")
-            graph.invoke(init_state, config={"recursion_limit": 20})
+            graph.invoke(init_state, config={"recursion_limit": execution_limit})
         except GraphRecursionError:
             logger.info("Graph reached recursion limit.")
         patch = vm.interface.get_patch_file(vm.repo_path)

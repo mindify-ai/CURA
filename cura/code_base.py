@@ -13,10 +13,12 @@ from langchain.storage import LocalFileStore, create_kv_docstore
 
 from .utils import TimeRecorder
 import os
-
+import logging
+from typing import Optional
 class CodeBase:
-    def __init__(self, name: str, get_file_content: callable, storage_root: str = "storage"):
+    def __init__(self, name: str, get_file_content: callable, storage_root: str = "storage", logger: Optional[logging.Logger] = None):
         self._get_file_content: callable[[str], str] = get_file_content
+        self.logger = logger if logger is not None else logging.getLogger(self.__class__.__name__)
         embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
         
         self.storage_root = storage_root
@@ -41,7 +43,15 @@ class CodeBase:
         )
     
     def add_files(self, files: set[str]):
-        file_contents = { file: self._get_file_content(file) for file in files if self._get_file_content(file) != "" }
+        self.logger.info(f"Adding {len(files)} files to code base.")
+        file_contents = {}
+        for file in files:
+            try:
+                content = self._get_file_content(file)
+                if content != "":
+                    file_contents[file] = content
+            except Exception as e:
+                self.logger.warning(f"Error getting file content for {file}: {e}")
         extension_to_splitter = {
             ".py": RecursiveCharacterTextSplitter(separators=["\nclass ", "\ndef ", "\n\tdef "]),
             ".md": RecursiveCharacterTextSplitter.from_language(

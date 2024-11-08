@@ -15,6 +15,7 @@ from typing import Optional
 from swebench.harness.constants import MAP_REPO_VERSION_TO_SPECS, USE_X86
 from swebench.harness.utils import get_environment_yml, get_requirements
 from typing import TypedDict
+from cura.utils import timeout
 
 class VirtualMachine:
     """
@@ -226,7 +227,7 @@ class SWEVM(VM_with_interface):
             self.logger.info(f"Image {image_name} found.")
         return image_name
             
-        
+    @timeout(300)
     def _install_env(self):
         logger = self.logger.getChild("install_env")
         logger.info(f"Installing environment for {self.data['instance_id']}.")
