@@ -40,7 +40,9 @@ def predict(inputs: dict):
         "model_name_or_path":"gpt-4o-mini"
     }
 
-dataset = list(client.list_examples(dataset_id="b0d01694-cdf6-4142-a93f-29b891d23682"))
+dataset = client.list_examples(dataset_id="b0d01694-cdf6-4142-a93f-29b891d23682")
+random.seed(42)
+dataset = random.sample(dataset, 3)
 print(len(dataset))
 """
 for d in dataset:
