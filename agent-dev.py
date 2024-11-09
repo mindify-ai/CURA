@@ -27,7 +27,8 @@ dotenv.load_dotenv()
 
 def main(instance_id: str):
     logger = logging.getLogger("agent-dev")
-    swebench = load_dataset('princeton-nlp/SWE-bench_Verified', split='test')
+    swebench = load_dataset('princeton-nlp/SWE-bench_Verified')
+    swebench = swebench['test']
 
     data = swebench.filter(lambda x: x['instance_id'] == instance_id)[0]
     logger.info(f"Data: {data}")
