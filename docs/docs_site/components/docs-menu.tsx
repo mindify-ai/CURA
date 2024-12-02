@@ -1,6 +1,6 @@
 "use client";
 
-import { ROUTES } from "@/lib/routes-config";
+import { ROUTES } from "../lib/routes-config";
 import SubLink from "./sublink";
 import { usePathname } from "next/navigation";
 

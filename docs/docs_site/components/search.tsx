@@ -13,7 +13,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import Anchor from "./anchor";
 import { advanceSearch, cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "../components/ui/scroll-area";
 
 export default function Search() {
   const [searchedInput, setSearchedInput] = useState("");
