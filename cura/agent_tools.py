@@ -1,6 +1,6 @@
-__import__('pysqlite3')
+#__import__('pysqlite3')
 import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+#sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 from langchain_core.tools import tool, BaseTool
 from typing import Optional
 import asyncio

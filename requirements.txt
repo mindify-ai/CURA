@@ -14,11 +14,11 @@ markupsafe==2.0.1
 directory_tree
 pylint
 chromadb
-pysqlite3
+#pysqlite3
 git+https://github.com/princeton-nlp/SWE-bench.git#egg=swebench
 langchain-huggingface
 langchain-text-splitters
 langchain-chroma
-#pysqlite3-binary
+pysqlite3-binary
 toml
 chardet
