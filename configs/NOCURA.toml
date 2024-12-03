@@ -1,5 +1,5 @@
 [dataset]
-id = "ef311ba7-75d8-4c87-a888-ee7257d796ff"
+id = ""
 count = "all"
 # Specify the count of examples to evaluate, if you want to evaluate all examples, specify "all"
 experiment_name = "None"
@@ -14,7 +14,6 @@ tools = ["bash_command",
     "find_file", 
     "search_dir", 
     "search_file",
-    #"search_file_fuzzy",
     "view_file",
     "edit"
 ]
