@@ -36,5 +36,5 @@ setup(
     author='Mark Chen, Cheng Pong Huang',
     author_email='mark@mindifyai.dev',
     description='A package for CURA - Code Understanding and Reasoning Agent',
-    url='https://github.com/MarkCodering/cura',
+    url='https://github.com/mindify-ai/cura',
 )
