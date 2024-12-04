@@ -1,4 +1,4 @@
-# Documents
+# CURA Documentation
 
 **Documents** is a powerful **Next.js** documentation starter kit designed to simplify the process of creating high-quality, comprehensive product documentation, technical manuals and business guides. Built with **React**, **Tailwind CSS** and **TypeScript**, this starter kit provides the foundation to build your project documentation and knowledge base.
 
