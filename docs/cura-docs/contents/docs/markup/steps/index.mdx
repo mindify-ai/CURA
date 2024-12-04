@@ -1,0 +1,44 @@
+---
+title: Steps
+description: This section provides an overview of Introduction.
+---
+
+The `<Step>` and `<StepItem>` components allow you to create structured step-by-step guides in your documentation. These components are particularly useful when you want to break down a process or tutorial into easy-to-follow stages.
+
+## Steps
+
+To create a step-by-step guide in your MDX, you can use the following structure:
+
+<Step>
+  <StepItem title="Install Node.js">
+    Make sure you have Node.js installed on your machine. You can download it from [here](https://nodejs.org).
+    
+    To verify the installation, run the following command:
+
+    ```bash
+    node -v
+    ```
+  </StepItem>
+
+  <StepItem title="Install Dependencies">
+    After cloning the repository, navigate to the project directory and install the necessary dependencies:
+
+    ```bash
+    npm install
+    ```
+  </StepItem>
+
+  <StepItem title="Run the Project">
+    Start the development server:
+
+    ```bash
+    npm run dev
+    ```
+
+    You can access the application at:
+
+    ```bash
+    http://localhost:3000
+    ```
+  </StepItem>
+</Step>
