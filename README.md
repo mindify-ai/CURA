@@ -1,27 +1,23 @@
 # CURA - Code Understanding and Reasoning Agent
 
+CURA is an open-source project to better leading coding agent on top of wide range of platforms. The project is developed by Research team at Mindify AI and is currently in the early stages of development. The project is developed using LangChain ecosystem with OpenAI API.
+
 ## Getting started
 
-Step 1: Open Docker and run the following command:
+To get started with the project, you need to install the required dependencies. You can install the dependencies using the following command:
 
 ```bash
-docker login
+pip install -r requirements.txt
 ```
 
-Step 2: un the following command to build the image:
+## Usage
+
+To use the project, you can run the following command:
 
 ```bash
-docker build -t swe_img .
+python agent-dev.py
 ```
 
-Step 3: Run the following Jupyter Notebook command to start the container:
+## Contributing
 
-```bash
-ReAct_SWE.ipynb
-```
-
-Step 4: Add .env file to the root directory with the following content:
-
-```bash
-OPENAI_API_KEY=your_openai_api_key
-```
+To learn more about contributing to the project, please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file.
