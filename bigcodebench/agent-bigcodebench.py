@@ -2,13 +2,6 @@ from tqdm import tqdm
 from dotenv import load_dotenv
 from bigcodebench.data import get_bigcodebench, load_solutions
 from bigcodebench.data.utils import CACHE_DIR
-from bigcodebench.eval import (
-    PASS,
-    compatible_eval_result,
-    estimate_pass_at_k,
-    untrusted_check,
-)
-from bigcodebench.gen.util import trusted_check
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from typing import Annotated
@@ -18,11 +11,10 @@ from typing_extensions import TypedDict
 from langchain_openai import ChatOpenAI
 import os
 import json
-import traceback
 
 load_dotenv()
 
-NUM_SAMPLES = 2
+NUM_SAMPLES = 100
 NUM_CORRECT = 0
 
 # Load BigCodeBench dataset and solutions
@@ -31,7 +23,7 @@ problems = get_bigcodebench(subset=subset)
 output_file = "samples.jsonl"  # Output file for samples
 
 # Limit the number of samples to evaluate
-problems = dict(list(problems.items())[:NUM_SAMPLES])
+# problems = dict(list(problems.items())[:NUM_SAMPLES])
 
 
 class State(TypedDict):
@@ -92,70 +84,6 @@ def code_sol_reasoning(state: State):
     """
 
     return {"messages": [llm.invoke(prompt)]}
-
-
-def evaluate_solution(problem, solution_code, cache_dir, max_time_limit=5.0):
-    """
-    Evaluates a solution using untrusted and trusted checks.
-
-    Args:
-        problem: The problem details from the dataset.
-        solution_code: The solution code to evaluate.
-        cache_dir: Path to the cache directory.
-        max_time_limit: Maximum allowed time for execution.
-
-    Returns:
-        bool: True if the solution passes all checks, False otherwise.
-    """
-    try:
-        # Untrusted Check
-        untrusted_result = untrusted_check(
-            solution_code,
-            problem["test"],
-            problem["entry_point"],
-            max_as_limit=30 * 1024,
-            max_data_limit=30 * 1024,
-            max_stack_limit=10,
-            min_time_limit=1.0,
-            gt_time_limit=max_time_limit,
-        )
-
-        if untrusted_result[0] != PASS:
-            print("Untrusted check failed.")
-            return False
-
-        # Trusted Check
-        trusted_result = trusted_check(
-            solution_code + "\n" + problem["canonical_solution"],
-            problem["test"],
-            problem["entry_point"],
-            max_as_limit=30 * 1024,
-            max_data_limit=30 * 1024,
-            max_stack_limit=10,
-            min_time_limit=1.0,
-        )
-
-        # Debugging trusted_result
-        print(f"Trusted check result: {trusted_result}")
-
-        # Safely handle trusted_result dictionary
-        if "time" not in trusted_result or trusted_result["time"] is None:
-            print(
-                f"Trusted check failed or timed out. Task ID: {trusted_result.get('task_id')}"
-            )
-            return False
-
-        if trusted_result["time"] > max_time_limit:
-            print(
-                f"Trusted check exceeded time limit. Time: {trusted_result['time']}, Limit: {max_time_limit}"
-            )
-            return False
-
-    except Exception as e:
-        print(f"Error during evaluation: {traceback.format_exc()}")
-        return False
-
-    return True
 
 
 graph_builder.add_node("code_understanding", code_understanding)
