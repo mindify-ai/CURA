@@ -33,7 +33,8 @@ class State(TypedDict):
 graph_builder = StateGraph(State)
 
 llm = ChatOpenAI(
-    model="gpt-4o-mini-2024-07-18",
+    model="gpt-4o-2024-05-13",
+    api_key=os.getenv("OPENAI_API_KEY"),
 )
 
 
