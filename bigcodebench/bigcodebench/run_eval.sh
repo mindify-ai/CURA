@@ -1,7 +1,7 @@
 #python3 agent-bigcodebench.py 
 python3 ./evaluate.py evaluate \
 --split="average" \
---subset="hard" \
+--subset="full" \
 --samples="./samples.jsonl" \
 --local_execute=True \
 --parallel=8 \
