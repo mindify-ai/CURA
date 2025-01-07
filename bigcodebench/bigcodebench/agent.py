@@ -95,10 +95,6 @@ def code_sol_reasoning(state: State):
     Please generate one possible solutions for each plan. Please provide the solutions in the following format: 
     <SOLUTION_1> Put your first possible solution based on the first plan here with confidence rating from 0 to 10 at <CONFIDENCE_RATING> </CONFIDENCE_RATING> </SOLUTION_1>
     </OUTPUT_INSTRUCT>
-    
-    <SOLUTION_1>
-    Put your first possible solution here with confidence rating from 0 to 10 at <CONFIDENCE_RATING> </CONFIDENCE_RATING>
-    </SOLUTION_1>
     """
 
     return {"messages": [llm.invoke(prompt)]}
@@ -144,7 +140,7 @@ def routing_condition(state: State):
         if int(confidence_score) < 8:
             return "code_solution_reasoning"
 
-    return END
+    return "code_solution_reasoning"
 
 graph_builder.add_node("code_problem_understanding", code_problem_understanding)
 graph_builder.add_node("code_solution_reasoning", code_sol_reasoning)
@@ -231,6 +227,3 @@ if __name__ == "__main__":
                 print(f"Error processing Task ID {task_id}: {e}")
 
     print(f"Sample generation completed. Output saved to {output_file}")
-
-
-
