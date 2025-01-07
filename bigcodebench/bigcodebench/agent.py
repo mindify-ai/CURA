@@ -140,7 +140,7 @@ def routing_condition(state: State):
         if int(confidence_score) < 8:
             return "code_solution_reasoning"
 
-    return "code_solution_reasoning"
+    return END
 
 graph_builder.add_node("code_problem_understanding", code_problem_understanding)
 graph_builder.add_node("code_solution_reasoning", code_sol_reasoning)
