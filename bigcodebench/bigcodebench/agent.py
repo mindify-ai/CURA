@@ -122,6 +122,7 @@ def feedback_model(state: State):
     <SOLUTION_1_UNDERSTANDING> Put your confidence score for the first understanding to the solution 1 here </SOLUTION_1_UNDERSTANDING>
     <SOLUTION_1_REASONING> Put your confidence score for the first reasoning to the solution 1 here </SOLUTION_1_REASONING>
     <FEEDBACK_1> Provide feedback for the first solution </FEEDBACK_1>
+    <SOLUTION_1> Put your final solution 1 here </SOLUTION_1>
     </OUTPUT_INSTRUCT>
     """
 
@@ -139,7 +140,8 @@ def routing_condition(state: State):
         confidence_score = state["messages"][-1].content.split("<SOLUTION_1_REASONING>")[1].split("</SOLUTION_1_REASONING>")[0]
         if int(confidence_score) < 8:
             return "code_solution_reasoning"
-
+        
+    # if the soluton is confident, finish the process
     return END
 
 graph_builder.add_node("code_problem_understanding", code_problem_understanding)
@@ -200,16 +202,16 @@ if __name__ == "__main__":
                     str(answer["messages"][-1].content)
                     .strip()
                     .replace("\n", "")
-                    .replace("  ", " ")
+                    # Only get the solution part of the response
+                    .split("<SOLUTION_1>")[1]
+                    .split("</SOLUTION_1>")[0]
                 )
 
                 # Extract Python code if present
-                if "```python" in answer_snippet:
-                    answer_snippet = (
-                        answer_snippet.split("```python")[1].split("```")[0].strip()
-                    )
-
-                print("Answer Snippet:", answer_snippet)
+                if answer_snippet.startswith("```python"):
+                    answer_snippet = answer_snippet.split("```python")[1].split("```")[0]
+                    
+                print("Generated Solution:", answer_snippet)
 
                 # Prepare JSON object
                 sample = {
