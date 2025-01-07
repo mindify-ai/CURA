@@ -181,7 +181,6 @@ if __name__ == "__main__":
 
             print("--------------------")
             print(f"Task ID: {task_id}")
-            print("Problem:", problem["complete_prompt"])
 
             if not problem:
                 print(f"Problem with task ID {task_id} not found in the dataset.")
@@ -201,7 +200,6 @@ if __name__ == "__main__":
                 answer_snippet = (
                     str(answer["messages"][-1].content)
                     .strip()
-                    .replace("\n", "")
                     # Only get the solution part of the response
                     .split("<SOLUTION_1>")[1]
                     .split("</SOLUTION_1>")[0]
@@ -211,8 +209,6 @@ if __name__ == "__main__":
                 if answer_snippet.startswith("```python"):
                     answer_snippet = answer_snippet.split("```python")[1].split("```")[0]
                     
-                print("Generated Solution:", answer_snippet)
-
                 # Prepare JSON object
                 sample = {
                     "task_id": task_id,
