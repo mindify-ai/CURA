@@ -38,10 +38,12 @@ graph_builder = StateGraph(State)
 
 llm = ChatOpenAI(
     model="gpt-4o-mini",
+    api_key=os.getenv("OPENAI_API_KEY"),
 )
 
-llm_reward_model = ChatOpenAI(
-    model="gpt-4o-mini",
+llm_feedback_model = ChatOpenAI(
+    model="gpt-4o",
+    api_key=os.getenv("OPENAI_API_KEY"),
 )
 
 def code_problem_understanding(state: State):
@@ -63,9 +65,8 @@ def code_problem_understanding(state: State):
     </Instructions>
     
     <OUTPUT_INSTRUCT>
-    Please provide two possible solutions for each sub-problem. Please provide the solutions in the following format:
+    Please provide one possible solutions for each sub-problem. Please provide the solutions in the following format:
     <PLAN_1> Put your first possible solution here with confidence rating from 0 to 10 at <CONFIDENCE_RATING> </CONFIDENCE_RATING> </PLAN_1>
-    <PLAN_2> Put your second possible solution here with confidence rating from 0 to 10 at <CONFIDENCE_RATING> </CONFIDENCE_RATING> </PLAN_2>
     </OUTPUT_INSTRUCT>
     """
 
@@ -91,23 +92,18 @@ def code_sol_reasoning(state: State):
     </Instructions>
     
     <OUTPUT_INSTRUCT>
-    Please generate two possible solutions for each plan. Please provide the solutions in the following format: 
+    Please generate one possible solutions for each plan. Please provide the solutions in the following format: 
     <SOLUTION_1> Put your first possible solution based on the first plan here with confidence rating from 0 to 10 at <CONFIDENCE_RATING> </CONFIDENCE_RATING> </SOLUTION_1>
-    <SOLUTION_2> Put your second possible solution based on the second plan here with confidence rating from 0 to 10 at <CONFIDENCE_RATING> </CONFIDENCE_RATING> </SOLUTION_2>
     </OUTPUT_INSTRUCT>
     
     <SOLUTION_1>
     Put your first possible solution here with confidence rating from 0 to 10 at <CONFIDENCE_RATING> </CONFIDENCE_RATING>
     </SOLUTION_1>
-    
-    <SOLUTION_2>
-    Put your second possible solution here with confidence rating from 0 to 10 at <CONFIDENCE_RATING> </CONFIDENCE_RATING>
-    </SOLUTION_2>
     """
 
     return {"messages": [llm.invoke(prompt)]}
 
-def reward_model(state: State):
+def feedback_model(state: State):
     prompt = f"""
     <Identity>
     You are an expert AI assistant specializing in programmatic reasoning, problem decomposition, reflective reasoning, and solution verification. Your goal is to deliver clear, logically sound, and testable solutions to complex programming challenges with confidence and precision.
@@ -128,15 +124,12 @@ def reward_model(state: State):
     <OUTPUT_INSTRUCT>
     Please provide a score from 0 to 10 for the confidence level of the each final solution. Please provide the scores in the following format:
     <SOLUTION_1_UNDERSTANDING> Put your confidence score for the first understanding to the solution 1 here </SOLUTION_1_UNDERSTANDING>
-    <SOLUTION_2_UNDERSTANDING> Put your confidence score for the second understanding to the solution 2 here </SOLUTION_2_UNDERSTANDING>
     <SOLUTION_1_REASONING> Put your confidence score for the first reasoning to the solution 1 here </SOLUTION_1_REASONING>
-    <SOLUTION_2_REASONING> Put your confidence score for the second reasoning to the solution 2 here </SOLUTION_2_REASONING>
     <FEEDBACK_1> Provide feedback for the first solution </FEEDBACK_1>
-    <FEEDBACK_2> Provide feedback for the second solution </FEEDBACK_2>
     </OUTPUT_INSTRUCT>
     """
 
-    return {"messages": [llm_reward_model.invoke(prompt)]}
+    return {"messages": [llm_feedback_model.invoke(prompt)]}
 
 def routing_condition(state: State):
     # If the first solution is not confident, go back to code_sol_reasoning or code_understanding based 
@@ -144,19 +137,10 @@ def routing_condition(state: State):
         confidence_score = state["messages"][-1].content.split("<SOLUTION_1_UNDERSTANDING>")[1].split("</SOLUTION_1_UNDERSTANDING>")[0]
         if int(confidence_score) < 8:
             return "code_problem_understanding"
-    # If the second solution is not confident, go back to code_sol_reasoning or code_understanding based
-    if state["messages"][-1].content.find("<SOLUTION_2_UNDERSTANDING>") != -1:
-        confidence_score = state["messages"][-1].content.split("<SOLUTION_2_UNDERSTANDING>")[1].split("</SOLUTION_2_UNDERSTANDING>")[0]
-        if int(confidence_score) < 8:
-            return "code_problem_understanding"
+        
     # If the first reasoning is not confident, go back to code_sol_reasoning
     if state["messages"][-1].content.find("<SOLUTION_1_REASONING>") != -1:
         confidence_score = state["messages"][-1].content.split("<SOLUTION_1_REASONING>")[1].split("</SOLUTION_1_REASONING>")[0]
-        if int(confidence_score) < 8:
-            return "code_solution_reasoning"
-    # If the second reasoning is not confident, go back to code_sol_reasoning
-    if state["messages"][-1].content.find("<SOLUTION_2_REASONING>") != -1:
-        confidence_score = state["messages"][-1].content.split("<SOLUTION_2_REASONING>")[1].split("</SOLUTION_2_REASONING>")[0]
         if int(confidence_score) < 8:
             return "code_solution_reasoning"
 
@@ -164,11 +148,11 @@ def routing_condition(state: State):
 
 graph_builder.add_node("code_problem_understanding", code_problem_understanding)
 graph_builder.add_node("code_solution_reasoning", code_sol_reasoning)
-graph_builder.add_node("reward_model", reward_model)
+graph_builder.add_node("feedback_model", feedback_model)
 graph_builder.set_entry_point("code_problem_understanding")
 graph_builder.add_edge("code_problem_understanding", "code_solution_reasoning")
-graph_builder.add_edge("code_solution_reasoning", "reward_model")
-graph_builder.add_conditional_edges("reward_model", routing_condition)
+graph_builder.add_edge("code_solution_reasoning", "feedback_model")
+graph_builder.add_conditional_edges("feedback_model", routing_condition)
 graph_builder.set_finish_point("code_solution_reasoning")
 graph = graph_builder.compile()
 
