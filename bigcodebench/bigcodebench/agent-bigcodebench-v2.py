@@ -231,8 +231,6 @@ if __name__ == "__main__":
                 answer_snippet = (
                     str(answer["messages"][-1].content)
                     .strip()
-                    .replace("\n", "")
-                    .replace("  ", " ")
                 )
 
                 # Extract Python code if present
