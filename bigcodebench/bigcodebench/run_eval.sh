@@ -2,7 +2,7 @@
 python3 ./evaluate.py evaluate \
 --split="average" \
 --subset="full" \
---samples="./samples.jsonl" \
+--samples="./final_output.jsonl" \
 --local_execute=True \
 --parallel=8 \
 --max_as_limit=40960 \
