@@ -37,13 +37,13 @@ graph_builder = StateGraph(State)
 llm = ChatOpenAI(
     model="gpt-4o-mini",
     api_key=os.getenv("OPENAI_API_KEY"),
-    temperature=0.95,
+    temperature=0.7,
 )
 
 llm_feedback_model = ChatOpenAI(
     model="gpt-4o-mini",
     api_key=os.getenv("OPENAI_API_KEY"),
-    temperature=0.95,
+    temperature=0.7,
 )
 
 def code_problem_understanding(state: State):
@@ -123,7 +123,7 @@ def feedback_model(state: State):
     
     <Instructions>
     Based on the resolved problems and their solutions, provide a score from 0 to 10 for the confidence level of correctness to the final solution. 
-    Provide feedback to the solution and the final code solution.
+    Provide feedback to the solution and generate the final code solution based on the feedback proovided.
     </Instructions>
     
     <OUTPUT_INSTRUCT>
