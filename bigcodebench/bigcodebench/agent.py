@@ -16,7 +16,7 @@ import os
 import json
 
 load_dotenv()
-subset = "hard"  # Replace with your subset name
+subset = "full"  # Replace with your subset name
 
 NUM_SAMPLES = len(get_bigcodebench(subset=subset))
 NUM_CORRECT = 0
@@ -238,10 +238,10 @@ if __name__ == "__main__":
     print("Starting sample generation...")
 
     # Define the number of workers
-    NUM_WORKERS = 8  # Adjust based on your system
+    NUM_WORKERS = 16  # Adjust based on your system
 
     # Output file
-    output_file = "output.jsonl"
+    output_file = "full_output.jsonl"
 
     with open(output_file, "w") as f:
         # Use ProcessPoolExecutor for parallel processing
