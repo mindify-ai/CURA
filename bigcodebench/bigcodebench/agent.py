@@ -16,7 +16,7 @@ import os
 import json
 
 load_dotenv()
-subset = "full"  # Replace with your subset name
+subset = "hard"  # Replace with your subset name
 
 NUM_SAMPLES = len(get_bigcodebench(subset=subset))
 NUM_CORRECT = 0
@@ -37,13 +37,13 @@ graph_builder = StateGraph(State)
 llm = ChatOpenAI(
     model="gpt-4o-mini",
     api_key=os.getenv("OPENAI_API_KEY"),
-    temperature=0.7,
+    temperature=1,
 )
 
 llm_feedback_model = ChatOpenAI(
     model="gpt-4o-mini",
     api_key=os.getenv("OPENAI_API_KEY"),
-    temperature=0.7,
+    temperature=1,
 )
 
 def code_problem_understanding(state: State):
@@ -142,14 +142,14 @@ def routing_condition(state: State):
     if state["messages"][-1].content.find("<SOLUTION_1_UNDERSTANDING_CONFIDENCE>") != -1:
         confidence_score = state["messages"][-1].content.split("<SOLUTION_1_UNDERSTANDING_CONFIDENCE>")[1].split("</SOLUTION_1_UNDERSTANDING_CONFIDENCE>")[0]
         # if the confidence score is less than 8, go back to code_sol_reasoning
-        if int(confidence_score) < 8:
+        if int(confidence_score) < 7:
             return "code_solution_reasoning"
         
     # If the first reasoning is not confident, go back to code_sol_reasoning
     if state["messages"][-1].content.find("<SOLUTION_1_REASONING_CONFIDENCE>") != -1:
         confidence_score = state["messages"][-1].content.split("<SOLUTION_1_REASONING_CONFIDENCE>")[1].split("</SOLUTION_1_REASONING_CONFIDENCE>")[0]
         # if the confidence score is less than 8, go back to code_sol_reasoning
-        if int(confidence_score) < 8:
+        if int(confidence_score) < 7:
             return "code_solution_reasoning"
     
     # if the soluton is confident, finish the process
@@ -241,7 +241,7 @@ if __name__ == "__main__":
     NUM_WORKERS = 16  # Adjust based on your system
 
     # Output file
-    output_file = "full_output.jsonl"
+    output_file = "hard_output.jsonl"
 
     with open(output_file, "w") as f:
         # Use ProcessPoolExecutor for parallel processing
