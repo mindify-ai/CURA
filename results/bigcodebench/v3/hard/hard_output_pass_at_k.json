@@ -1,6 +1,6 @@
 {
-  "pass@1": 0.2972972972972973,
-  "model": "output.jsonl",
+  "pass@1": 0.28378378378378377,
+  "model": "hard_output.jsonl",
   "split": "average",
   "subset": "hard",
   "calibrated": true,
