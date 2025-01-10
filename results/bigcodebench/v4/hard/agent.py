@@ -37,13 +37,13 @@ graph_builder = StateGraph(State)
 llm = ChatOpenAI(
     model="gpt-4o-mini",
     api_key=os.getenv("OPENAI_API_KEY"),
-    temperature=0.95,
+    temperature=0.9,
 )
 
 llm_feedback_model = ChatOpenAI(
     model="gpt-4o-mini",
     api_key=os.getenv("OPENAI_API_KEY"),
-    temperature=0.95,
+    temperature=0.9,
 )
 
 def code_problem_understanding(state: State):
