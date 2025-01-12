@@ -123,7 +123,7 @@ def feedback_model(state: State):
     
     <Instructions>
     Based on the resolved problems and their solutions, provide a score from 0 to 10 for the confidence level of correctness to the final solution. 
-    Provide feedback to the solution and generate the final code solution based on the feedback proovided.
+    Provide feedback to the solution and generate the final code solution based on the feedback provided.
     </Instructions>
     
     <OUTPUT_INSTRUCT>
