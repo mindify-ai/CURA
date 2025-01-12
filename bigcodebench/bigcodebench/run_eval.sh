@@ -1,4 +1,4 @@
-python3 agent.py 
+#python3 agent.py 
 python ./evaluate.py evaluate \
 --split="average" \
 --subset="hard" \
