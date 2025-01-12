@@ -2,7 +2,7 @@
 python ./evaluate.py evaluate \
 --split="average" \
 --subset="hard" \
---samples="./hard_output_gpt-4o-supervisor.jsonl" \
+--samples="./hard_output.jsonl" \
 --local_execute=True \
 --parallel=16 \
 --max_as_limit=40960 \
