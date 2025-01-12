@@ -41,7 +41,7 @@ llm = ChatOpenAI(
 )
 
 llm_feedback_model = ChatOpenAI(
-    model="gpt-4o-mini",
+    model="gpt-4o-2024-11-20",
     api_key=os.getenv("OPENAI_API_KEY"),
     temperature=0.95,
 )
@@ -241,7 +241,7 @@ if __name__ == "__main__":
     NUM_WORKERS = 16  # Adjust based on your system
 
     # Output file
-    output_file = "hard_output.jsonl"
+    output_file = "hard_output_gpt-4o-supervisor.jsonl"
 
     with open(output_file, "w") as f:
         # Use ProcessPoolExecutor for parallel processing
