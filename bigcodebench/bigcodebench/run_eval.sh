@@ -1,10 +1,10 @@
-#python3 agent-bigcodebench.py 
-python3 ./evaluate.py evaluate \
+python3 agent.py 
+python ./evaluate.py evaluate \
 --split="average" \
 --subset="hard" \
---samples="./samples.jsonl" \
+--samples="./hard_output_gpt-4o-supervisor.jsonl" \
 --local_execute=True \
---parallel=8 \
+--parallel=16 \
 --max_as_limit=40960 \
 --max_data_limit=40960 \
 --max_stack_limit=20 \
