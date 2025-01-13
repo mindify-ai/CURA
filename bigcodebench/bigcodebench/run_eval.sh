@@ -1,5 +1,5 @@
-#python3 agent.py 
-python ./evaluate.py evaluate \
+python3 agent.py 
+python3 ./evaluate.py evaluate \
 --split="average" \
 --subset="hard" \
 --samples="./hard_output.jsonl" \
