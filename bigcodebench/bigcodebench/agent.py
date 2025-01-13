@@ -65,6 +65,7 @@ def code_problem_understanding(state: State):
     <Instructions>
     Analyze the problem or codebase and divide it into smaller sub-problems or logical components. 
     Clearly describe each sub-problem, its purpose, and how it contributes to the overall solution. 
+    Provide a plan for solving each sub-problem and understanding of the problem statement by explaining the logic and reasoning behind the plan.
     </Instructions>
     
     <OUTPUT_INSTRUCT>
@@ -93,8 +94,8 @@ def code_sol_reasoning(state: State):
     </Task>
     
     <Instructions>
-    Based on the resolved sub-problems and their solutions, generate the final solution for the problem by combining the resolved sub-problems. 
-    Verify the correctness of the final solution through testing and provide the final code solution.
+    Based on the proposed solutions for each sub-problem, generate a final solution by combining the resolved sub-problems.
+    Provide a clear and logically sound solution to the problem statement by explaining the reasoning behind the solution.
     </Instructions>
     
     <OUTPUT_INSTRUCT>
@@ -105,7 +106,7 @@ def code_sol_reasoning(state: State):
 
     return {"messages": [llm.invoke(prompt)]}
 
-def feedback_model(state: State):
+def reflective_generator(state: State):
     prompt = f"""
     <Identity>
     You are an expert AI assistant specializing in programmatic reasoning, problem decomposition, reflective reasoning, and solution verification. 
@@ -122,8 +123,13 @@ def feedback_model(state: State):
     </Task>
     
     <Instructions>
-    Based on the resolved problems and their solutions, provide a score from 0 to 10 for the confidence level of correctness to the final solution. 
-    Provide feedback to the solution and generate the final code solution based on the feedback provided.
+    Based on the resolved problems and their solutions, provide a score from 0 to 100 for the confidence level of correctness to the final solution in integer format.
+    Provide feedback to the solution and generate the final code solution based on the feedback provided based on the following criteria:
+    1. Correctness of the solution
+    2. Clarity and readability of the solution
+    3. Efficiency and optimization of the solution
+    4. Testability and maintainability of the solution
+    5. Overall confidence in the solution
     </Instructions>
     
     <OUTPUT_INSTRUCT>
@@ -142,14 +148,14 @@ def routing_condition(state: State):
     if state["messages"][-1].content.find("<SOLUTION_1_UNDERSTANDING_CONFIDENCE>") != -1:
         confidence_score = state["messages"][-1].content.split("<SOLUTION_1_UNDERSTANDING_CONFIDENCE>")[1].split("</SOLUTION_1_UNDERSTANDING_CONFIDENCE>")[0]
         # if the confidence score is less than 8, go back to code_sol_reasoning
-        if int(confidence_score) < 9:
+        if int(confidence_score) < 8:
             return "code_solution_reasoning"
         
     # If the first reasoning is not confident, go back to code_sol_reasoning
     if state["messages"][-1].content.find("<SOLUTION_1_REASONING_CONFIDENCE>") != -1:
         confidence_score = state["messages"][-1].content.split("<SOLUTION_1_REASONING_CONFIDENCE>")[1].split("</SOLUTION_1_REASONING_CONFIDENCE>")[0]
         # if the confidence score is less than 8, go back to code_sol_reasoning
-        if int(confidence_score) < 9:
+        if int(confidence_score) < 8:
             return "code_solution_reasoning"
     
     # if the soluton is confident, finish the process
@@ -157,14 +163,14 @@ def routing_condition(state: State):
 
 graph_builder.add_node("code_problem_understanding", code_problem_understanding)
 graph_builder.add_node("code_solution_reasoning", code_sol_reasoning)
-graph_builder.add_node("feedback_model", feedback_model)
+graph_builder.add_node("reflective_generator", reflective_generator)
 
 graph_builder.set_entry_point("code_problem_understanding")
 graph_builder.add_edge("code_problem_understanding", "code_solution_reasoning")
-graph_builder.add_edge("code_solution_reasoning", "feedback_model")
+graph_builder.add_edge("code_solution_reasoning", "reflective_generator")
 
-graph_builder.add_conditional_edges("feedback_model", routing_condition)
-graph_builder.set_finish_point("code_solution_reasoning")
+graph_builder.add_conditional_edges("reflective_generator", routing_condition)
+graph_builder.set_finish_point("reflective_generator")
 
 graph = graph_builder.compile()
 
