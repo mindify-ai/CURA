@@ -106,7 +106,7 @@ def code_sol_reasoning(state: State):
 
     return {"messages": [llm.invoke(prompt)]}
 
-def reflective_generator(state: State):
+def feedback_model(state: State):
     prompt = f"""
     <Identity>
     You are an expert AI assistant specializing in programmatic reasoning, problem decomposition, reflective reasoning, and solution verification. 
@@ -123,13 +123,8 @@ def reflective_generator(state: State):
     </Task>
     
     <Instructions>
-    Based on the resolved problems and their solutions, provide a score from 0 to 100 for the confidence level of correctness to the final solution in integer format.
-    Provide feedback to the solution and generate the final code solution based on the feedback provided based on the following criteria:
-    1. Correctness of the solution
-    2. Clarity and readability of the solution
-    3. Efficiency and optimization of the solution
-    4. Testability and maintainability of the solution
-    5. Overall confidence in the solution
+    Based on the resolved problems and their solutions, provide a score from 0 to 10 for the confidence level of correctness to the final solution. 
+    Provide feedback to the solution and generate the final code solution based on the feedback provided.
     </Instructions>
     
     <OUTPUT_INSTRUCT>
@@ -143,19 +138,20 @@ def reflective_generator(state: State):
 
     return {"messages": [llm_feedback_model.invoke(prompt)]}
 
+
 def routing_condition(state: State):
     # If the first solution is not confident, go back to code_sol_reasoning or code_understanding based 
     if state["messages"][-1].content.find("<SOLUTION_1_UNDERSTANDING_CONFIDENCE>") != -1:
         confidence_score = state["messages"][-1].content.split("<SOLUTION_1_UNDERSTANDING_CONFIDENCE>")[1].split("</SOLUTION_1_UNDERSTANDING_CONFIDENCE>")[0]
         # if the confidence score is less than 8, go back to code_sol_reasoning
-        if int(confidence_score) < 8:
-            return "code_solution_reasoning"
+        if int(confidence_score) < 9:
+            return "code_problem_understanding"
         
     # If the first reasoning is not confident, go back to code_sol_reasoning
     if state["messages"][-1].content.find("<SOLUTION_1_REASONING_CONFIDENCE>") != -1:
         confidence_score = state["messages"][-1].content.split("<SOLUTION_1_REASONING_CONFIDENCE>")[1].split("</SOLUTION_1_REASONING_CONFIDENCE>")[0]
         # if the confidence score is less than 8, go back to code_sol_reasoning
-        if int(confidence_score) < 8:
+        if int(confidence_score) < 9:
             return "code_solution_reasoning"
     
     # if the soluton is confident, finish the process
@@ -163,14 +159,14 @@ def routing_condition(state: State):
 
 graph_builder.add_node("code_problem_understanding", code_problem_understanding)
 graph_builder.add_node("code_solution_reasoning", code_sol_reasoning)
-graph_builder.add_node("reflective_generator", reflective_generator)
+graph_builder.add_node("feedback_model", feedback_model)
 
 graph_builder.set_entry_point("code_problem_understanding")
 graph_builder.add_edge("code_problem_understanding", "code_solution_reasoning")
-graph_builder.add_edge("code_solution_reasoning", "reflective_generator")
+graph_builder.add_edge("code_solution_reasoning", "feedback_model")
 
-graph_builder.add_conditional_edges("reflective_generator", routing_condition)
-graph_builder.set_finish_point("reflective_generator")
+graph_builder.add_conditional_edges("feedback_model", routing_condition)
+graph_builder.set_finish_point("feedback_model")
 
 graph = graph_builder.compile()
 
@@ -182,8 +178,8 @@ display(
         )
     )
 )
-"""
 
+"""
 # %%
 import json
 from concurrent.futures import ProcessPoolExecutor, as_completed
