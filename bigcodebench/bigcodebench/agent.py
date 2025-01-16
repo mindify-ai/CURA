@@ -37,13 +37,13 @@ graph_builder = StateGraph(State)
 llm = ChatOpenAI(
     model="gpt-4o-mini",
     api_key=os.getenv("OPENAI_API_KEY"),
-    temperature=0.95,
+    temperature=0.2,
 )
 
 llm_feedback_model = ChatOpenAI(
     model="gpt-4o-mini",
     api_key=os.getenv("OPENAI_API_KEY"),
-    temperature=0.95,
+    temperature=0.2,
 )
 
 def code_problem_understanding(state: State):
@@ -65,12 +65,14 @@ def code_problem_understanding(state: State):
     <Instructions>
     Analyze the problem or codebase and divide it into smaller sub-problems or logical components. 
     Clearly describe each sub-problem, its purpose, and how it contributes to the overall solution. 
+    Generate an instruction set for solving each sub-problem and understanding the problem statement.
     Provide a plan for solving each sub-problem and understanding of the problem statement by explaining the logic and reasoning behind the plan.
     </Instructions>
     
     <OUTPUT_INSTRUCT>
     Please provide one possible solutions for each sub-problem. Please provide the solutions in the following format with the plan and understanding to the problem statement only in the code block: <PLAN_1> ... </PLAN_1>
     <PLAN_1> Put your first possible solution plan with the understanding to the problem statement here. </PLAN_1>
+    <INSTRUCTION_1> Put your instruction set for the first plan here. </INSTRUCTION_1>
     </OUTPUT_INSTRUCT>
     """
 
@@ -94,8 +96,7 @@ def code_sol_reasoning(state: State):
     </Task>
     
     <Instructions>
-    Based on the proposed solutions for each sub-problem, generate a final solution by combining the resolved sub-problems.
-    Provide a clear and logically sound solution to the problem statement by explaining the reasoning behind the solution.
+    Based on the proposed solution plans and instructions, generate a final solution by combining the resolved sub-problems.
     </Instructions>
     
     <OUTPUT_INSTRUCT>
@@ -199,9 +200,7 @@ def process_problem(task_id, problem):
 
         # Construct the state object
         state = {
-            "messages": problem["complete_prompt"]
-            + " based on the instruction: "
-            + problem["instruct_prompt"]
+            "messages": "Here is the code to solve: " + problem["complete_prompt"] + "Please provide a solution to the problem by understanding the code and reasoning the solution."
         }
 
         # Generate response using the graph
@@ -243,7 +242,7 @@ if __name__ == "__main__":
     NUM_WORKERS = 16  # Adjust based on your system
 
     # Output file
-    output_file = "hard_output.jsonl"
+    output_file = "hard_output_complete.jsonl"
 
     with open(output_file, "w") as f:
         # Use ProcessPoolExecutor for parallel processing

@@ -2,7 +2,7 @@ python3 agent.py
 python3 ./evaluate.py evaluate \
 --split="average" \
 --subset="hard" \
---samples="./hard_output.jsonl" \
+--samples="./hard_output_complete.jsonl" \
 --local_execute=True \
 --parallel=16 \
 --max_as_limit=40960 \
